@@ -1,5 +1,5 @@
 class ApiEndpoints {
-  static const String baseUrl = 'https://dcc.progressnepal..com/api/v1';
+  static const String baseUrl = 'https://dcc.progressnepal.com/api';
   
   // Auth
   static const String login = '/login';

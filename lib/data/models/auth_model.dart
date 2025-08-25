@@ -49,4 +49,13 @@ class AuthData {
       expiresAt: json['expires_at'] ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      'access_token': accessToken,
+      'token_type': tokenType,
+      'expires_at': expiresAt,
+    };
+  }
 }

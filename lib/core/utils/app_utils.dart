@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
 class AppUtils {
@@ -80,6 +81,11 @@ class AppUtils {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}').hasMatch(email);
   }
 
+  // Validate password
+  static bool isValidPassword(String password) {
+    return password.length >= 8;
+  }
+
   // Generate random string
   static String generateRandomString(int length) {
     const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -87,5 +93,21 @@ class AppUtils {
     return String.fromCharCodes(
       Iterable.generate(length, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
     );
+  }
+
+
+  static double getBottomNavigationBarHeight(BuildContext context) {
+    final bottomNavigationBarHeight = MediaQuery.of(context).viewInsets.bottom;
+    return bottomNavigationBarHeight;
+  }
+
+  static double getScreenWidth(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return screenWidth;
+  }
+
+  static double getScreenHeight(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    return screenHeight;
   }
 }
