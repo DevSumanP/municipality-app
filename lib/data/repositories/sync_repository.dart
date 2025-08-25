@@ -65,7 +65,7 @@ class SyncRepository {
   Future<Either<AppException, bool>> needsSync() async {
     try {
       // Check if local data exists and is not too old
-      
+
       return const Right(true);
     } catch (e) {
       return Left(AppException.unknown(e.toString()));

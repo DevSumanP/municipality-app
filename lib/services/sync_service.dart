@@ -6,8 +6,10 @@ import 'package:municipality_app/core/storage/local_storage.dart';
 import 'package:municipality_app/data/models/sync_model.dart';
 import 'package:municipality_app/data/repositories/sync_repository.dart';
 
+import '../presentation/providers/sync_provider.dart';
+
 final syncServiceProvider = Provider<SyncService>((ref) {
-  return throw UnimplementedError('SyncService not implemented');
+  return SyncService(syncRepository: ref.read(syncRepositoryProvider));
 });
 
 class SyncService {

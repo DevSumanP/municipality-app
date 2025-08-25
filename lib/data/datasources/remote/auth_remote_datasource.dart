@@ -20,21 +20,53 @@ class AuthRemoteDataSource {
         },
       );
 
+      final responseData = response.data as Map<String, dynamic>;
+      print('Response: Status=${response.statusCode}, Data=$responseData');
+
       if (response.statusCode == 200) {
-        return AuthModel.fromJson(response.data);
+        if (responseData.containsKey('success') &&
+            responseData['success'] is bool &&
+            responseData['success'] == true) {
+          return AuthModel.fromJson(responseData);
+        } else {
+          final errorMessage = responseData.containsKey('message') &&
+                  responseData['message'] != null
+              ? responseData['message'].toString()
+              : 'Login failed';
+          print('Unauthorized Error: $errorMessage');
+          throw AppException.unauthorized(errorMessage);
+        }
       } else {
-        throw AppException.server('Login failed');
+        final errorMessage = responseData.containsKey('message') &&
+                responseData['message'] != null
+            ? responseData['message'].toString()
+            : 'Login failed';
+        print('Server Error: $errorMessage');
+        throw AppException.server(errorMessage);
       }
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        throw AppException.unauthorized('Invalid credentials');
-      } else if (e.response?.statusCode == 422) {
-        throw AppException.validation('Invalid input data');
+      print(
+          'DioException: Type=${e.type}, Status=${e.response?.statusCode}, Data=${e.response?.data}');
+      if (e.response?.data != null && e.response!.data is Map) {
+        final errorData = e.response!.data as Map<String, dynamic>;
+        final errorMessage =
+            errorData.containsKey('message') && errorData['message'] != null
+                ? errorData['message'].toString()
+                : 'Login failed';
+        if (e.response?.statusCode == 401) {
+          throw AppException.unauthorized(errorMessage);
+        } else if (e.response?.statusCode == 422) {
+          throw AppException.validation(errorMessage);
+        } else {
+          throw AppException.server(errorMessage);
+        }
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw AppException.network('Network timeout occurred');
       } else {
         throw AppException.network('Network error occurred');
       }
-    } catch (e) {
-      throw AppException.unknown('An unknown error occurred');
     }
   }
 

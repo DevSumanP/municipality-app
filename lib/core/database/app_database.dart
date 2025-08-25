@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:floor/floor.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
 
 import 'tables/services_table.dart';
 import 'tables/employees_table.dart';
@@ -7,10 +8,10 @@ import 'tables/media_files_table.dart';
 import 'tables/documents_table.dart';
 import 'tables/app_metadata_table.dart';
 
-// part 'app_database.g.dart';
+part 'app_database.g.dart';
 
 @Database(
-  version: 1,
+  version: 2, // Incremented to trigger database recreation
   entities: [
     ServicesTable,
     EmployeesTable,

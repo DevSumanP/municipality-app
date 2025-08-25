@@ -5,6 +5,7 @@ import '../../data/datasources/local/auth_local_datasource.dart';
 import '../../data/models/user_model.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/storage/local_storage.dart';
+import '../../core/exceptions/app_exceptions.dart';
 
 // Auth repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -136,8 +137,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
       
       result.fold(
         (error) {
+          print('Login failed with error: ${error.message}');
           state = state.copyWith(
             isLoading: false,
+            isLoggedIn: false,
             error: error.message,
           );
         },
@@ -151,10 +154,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
           );
         },
       );
-    } catch (e) {
+    } on AppException catch (e) {
+      print('Login AppException: ${e.message}');
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        isLoggedIn: false,
+        error: e.message,
+      );
+    } catch (e) {
+      print('Unexpected error during login: $e');
+      state = state.copyWith(
+        isLoading: false,
+        isLoggedIn: false,
+        error: 'An unexpected error occurred. Please try again.',
       );
     }
   }

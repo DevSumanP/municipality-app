@@ -2,12 +2,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/sync_model.dart';
 import '../../data/repositories/sync_repository.dart';
 import '../../services/sync_service.dart';
-import '../../core/exceptions/app_exceptions.dart';
+import 'services_provider.dart';
+import 'employees_provider.dart';
+import 'documents_provider.dart';
 
-// Sync repository provider (needs to be defined)
+// Sync repository provider
 final syncRepositoryProvider = Provider<SyncRepository>((ref) {
-  // This would need the actual repository dependencies
-  return throw UnimplementedError('SyncRepository not implemented');
+  return SyncRepository(
+    serviceRepository: ref.read(serviceRepositoryProvider),
+    employeeRepository: ref.read(employeeRepositoryProvider),
+    documentRepository: ref.read(documentRepositoryProvider),
+  );
 });
 
 // Sync state
@@ -188,6 +193,10 @@ final lastSyncTimeProvider = Provider<String?>((ref) {
 
 final syncProgressProvider = Provider<double>((ref) {
   return ref.watch(syncProvider).progressPercentage;
+});
+
+final syncCurrentProgressProvider = Provider<String?>((ref) {
+  return ref.watch(syncProvider).currentProgress;
 });
 
 final needsInitialSyncProvider = Provider<bool>((ref) {

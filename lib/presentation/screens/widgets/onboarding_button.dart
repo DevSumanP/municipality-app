@@ -10,24 +10,20 @@ class OnBoardingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-        bottom: AppUtils.getBottomNavigationBarHeight(context) + 24,
-        right: AppSizes.defaultSpace,
-        child: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            shape: const CircleBorder(),
-            backgroundColor: AppColors.primary,
-            minimumSize: const Size(56, 56), // Standard FAB size
-            padding: EdgeInsets.zero, // Remove default padding
-            elevation: 2,
-          ),
-          child: const Icon(
-            Iconsax.d_rotate,
-            color: AppColors.white,
-            size: 28,
-          ),
-        ),
+    return ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        shape: const CircleBorder(),
+        backgroundColor: AppColors.primary,
+        minimumSize: const Size(56, 56), // Standard FAB size
+        padding: EdgeInsets.zero, // Remove default padding
+        elevation: 2,
+      ),
+      child: const Icon(
+        Iconsax.d_rotate,
+        color: AppColors.white,
+        size: 28,
+      ),
     );
   }
 }

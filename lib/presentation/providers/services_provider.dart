@@ -1,19 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:municipality_app/data/datasources/local/service_local_datasource.dart';
 import '../../data/repositories/service_repository.dart';
 import '../../data/datasources/remote/service_remote_datasource.dart';
 import '../../data/models/service_model.dart';
 import '../../core/network/dio_client.dart';
+import 'database_provider.dart';
 
 // Service repository provider
 final serviceRepositoryProvider = Provider<ServiceRepository>((ref) {
   final dioClient = ref.read(dioClientProvider);
-  // Note: This would need the actual database instance
-  // final database = ref.read(databaseProvider);
+  final database = ref.watch(appDatabaseProvider);
   
   return ServiceRepository(
     remoteDataSource: ServiceRemoteDataSource(dioClient: dioClient),
-    // localDataSource: ServiceLocalDataSource(database: database),
-    localDataSource: throw UnimplementedError('Database not initialized'),
+    localDataSource: ServiceLocalDataSource(database: database),
   );
 });
 

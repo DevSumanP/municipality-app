@@ -21,7 +21,7 @@ class AuthLocalDataSource {
     );
     await localStorage.setString(
       StorageKeys.tokenExpiry,
-      authModel.data.expiresAt,
+      authModel.data.expiresAt.toIso8601String(),
     );
   }
 

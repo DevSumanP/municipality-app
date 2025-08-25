@@ -32,7 +32,7 @@ class AuthData {
   final User user;
   final String accessToken;
   final String tokenType;
-  final String expiresAt;
+  final DateTime expiresAt;
 
   AuthData({
     required this.user,
@@ -46,7 +46,7 @@ class AuthData {
       user: User.fromJson(json['user'] ?? {}),
       accessToken: json['access_token'] ?? '',
       tokenType: json['token_type'] ?? '',
-      expiresAt: json['expires_at'] ?? '',
+      expiresAt: DateTime.parse(json['expires_at'] ?? ''),
     );
   }
 
@@ -55,7 +55,7 @@ class AuthData {
       'user': user.toJson(),
       'access_token': accessToken,
       'token_type': tokenType,
-      'expires_at': expiresAt,
+      'expires_at': expiresAt.toIso8601String(),
     };
   }
 }

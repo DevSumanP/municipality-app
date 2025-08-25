@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:municipality_app/presentation/providers/database_provider.dart';
+import '../../data/datasources/local/employee_local_datasource.dart';
 import '../../data/repositories/employee_repository.dart';
 import '../../data/datasources/remote/employee_remote_datasource.dart';
 import '../../data/models/employee_model.dart';
@@ -7,13 +9,11 @@ import '../../core/network/dio_client.dart';
 // Employee repository provider
 final employeeRepositoryProvider = Provider<EmployeeRepository>((ref) {
   final dioClient = ref.read(dioClientProvider);
-  // Note: This would need the actual database instance
-  // final database = ref.read(databaseProvider);
+  final database = ref.watch(appDatabaseProvider);
   
   return EmployeeRepository(
     remoteDataSource: EmployeeRemoteDataSource(dioClient: dioClient),
-    // localDataSource: EmployeeLocalDataSource(database: database),
-    localDataSource: throw UnimplementedError('Database not initialized'),
+    localDataSource: EmployeeLocalDataSource(database: database),
   );
 });
 
