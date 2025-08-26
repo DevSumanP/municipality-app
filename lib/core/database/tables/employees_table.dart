@@ -1,43 +1,24 @@
-import 'package:floor/floor.dart';
+import 'package:drift/drift.dart';
 
-@entity
-class EmployeesTable {
-  @primaryKey
-  final int id;
-  final String userId;
-  final String designationId;
-  final String categoryId;
-  final int? departmentId;
-  final String name;
-  final String? phone;
-  final String? email;
-  final String? roomNumber;
-  final String? image;
-  final String order;
-  final String status;
-  final String createdAt;
-  final String updatedAt;
-  final String isUpdated;
-  final String? imageUrl;
-  final String? localImagePath;
+@DataClassName('EmployeesTable')
+class Employees extends Table {
+  IntColumn get id => integer()();
+  TextColumn get userId => text()();
+  TextColumn get designationId => text()();
+  TextColumn get categoryId => text()();
+  IntColumn get departmentId => integer().nullable()();
+  TextColumn get name => text()();
+  TextColumn get phone => text().nullable()();
+  TextColumn get email => text().nullable()();
+  TextColumn get roomNumber => text().nullable()();
+  TextColumn get image => text().nullable()();
+  TextColumn get order => text()();
+  TextColumn get status => text()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+  TextColumn get isUpdated => text()();
+  TextColumn get imageUrl => text().nullable()();
 
-  const EmployeesTable({
-    required this.id,
-    required this.userId,
-    required this.designationId,
-    required this.categoryId,
-    this.departmentId,
-    required this.name,
-    this.phone,
-    this.email,
-    this.roomNumber,
-    this.image,
-    required this.order,
-    required this.status,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.isUpdated,
-    this.imageUrl,
-    this.localImagePath,
-  });
+  @override
+  Set<Column> get primaryKey => {id};
 }

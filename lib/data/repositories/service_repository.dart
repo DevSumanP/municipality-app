@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:municipality_app/core/database/tables/services_table.dart';
+import 'package:municipality_app/core/database/app_database.dart';
 import 'package:municipality_app/core/exceptions/app_exceptions.dart';
 import 'package:municipality_app/data/datasources/remote/service_remote_datasource.dart';
 import 'package:municipality_app/data/models/service_model.dart';

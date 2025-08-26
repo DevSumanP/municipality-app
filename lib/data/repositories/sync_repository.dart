@@ -17,36 +17,61 @@ class SyncRepository {
   });
 
   Future<Either<AppException, SyncModel>> syncAllData() async {
+    print('[SyncRepository] Starting syncAllData');
     try {
       final List<String> syncedTables = [];
       String? lastError;
 
-      // Sync services
+      print('[SyncRepository] Starting services sync...');
       final servicesResult = await serviceRepository.syncServices();
       servicesResult.fold(
-        (error) => lastError = error.message,
-        (success) => syncedTables.add('services'),
+        (error) {
+          lastError = error.message;
+          print('[SyncRepository] Error syncing services: ${error.message}');
+        },
+        (success) {
+          syncedTables.add('services');
+          print('[SyncRepository] Services synced successfully');
+        },
       );
 
-      // Sync employees
+      print('[SyncRepository] Starting employees sync...');
       final employeesResult = await employeeRepository.syncEmployees();
       employeesResult.fold(
-        (error) => lastError = error.message,
-        (success) => syncedTables.add('employees'),
+        (error) {
+          lastError = error.message;
+          print('[SyncRepository] Error syncing employees: ${error.message}');
+        },
+        (success) {
+          syncedTables.add('employees');
+          print('[SyncRepository] Employees synced successfully');
+        },
       );
 
-      // Sync notices
+      print('[SyncRepository] Starting notices sync...');
       final noticesResult = await documentRepository.syncNotices();
       noticesResult.fold(
-        (error) => lastError = error.message,
-        (success) => syncedTables.add('notices'),
+        (error) {
+          lastError = error.message;
+          print('[SyncRepository] Error syncing notices: ${error.message}');
+        },
+        (success) {
+          syncedTables.add('notices');
+          print('[SyncRepository] Notices synced successfully');
+        },
       );
 
-      // Sync scrolling news
+      print('[SyncRepository] Starting scrolling news sync...');
       final scrollingNewsResult = await documentRepository.syncScrollingNews();
       scrollingNewsResult.fold(
-        (error) => lastError = error.message,
-        (success) => syncedTables.add('scrolling_news'),
+        (error) {
+          lastError = error.message;
+          print('[SyncRepository] Error syncing scrolling news: ${error.message}');
+        },
+        (success) {
+          syncedTables.add('scrolling_news');
+          print('[SyncRepository] Scrolling news synced successfully');
+        },
       );
 
       final syncModel = SyncModel(
@@ -56,8 +81,15 @@ class SyncRepository {
         error: lastError,
       );
 
+      print('[SyncRepository] Sync completed. Synced tables: ${syncedTables.join(', ')}');
+      if (lastError != null) {
+        print('[SyncRepository] Sync completed with errors: $lastError');
+      }
+
       return Right(syncModel);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[SyncRepository] Unexpected error in syncAllData: $e');
+      print('Stack trace: $stackTrace');
       return Left(AppException.unknown(e.toString()));
     }
   }

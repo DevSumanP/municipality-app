@@ -22,45 +22,62 @@ class SyncService {
     Function(String)? onProgress,
     Function(AppException)? onError,
   }) async {
+    print('[SyncService] Starting syncAllData');
     try {
       //  Check network connectivity
+      print('[SyncService] Checking network connectivity...');
       if (!await NetworkInfo.isConnected) {
-        throw AppException.noInternet('No internet connection available');
+        final error = 'No internet connection available';
+        print('[SyncService] $error');
+        throw AppException.noInternet(error);
       }
 
       onProgress?.call('Starting sync...');
-
+      print('[SyncService] Marking sync as started');
+      
       // Mark sync as started
       await _setSyncStatus(true);
 
       onProgress?.call('Syncing data...');
+      print('[SyncService] Starting repository sync...');
 
       // Perform sync
       final result = await syncRepository.syncAllData();
+      print('[SyncService] Repository sync completed, processing result...');
 
-      return result.fold((error) {
+      return await result.fold((error) async {
+        print('[SyncService] Error during sync: ${error.message}');
         onError?.call(error);
         return SyncModel(
-            lastSyncTime: DateTime.now().toIso8601String(),
-            syncedTables: [],
-            isSyncing: false,
-            error: error.message);
+          lastSyncTime: DateTime.now().toIso8601String(),
+          syncedTables: [],
+          isSyncing: false,
+          error: error.message,
+        );
       }, (syncModel) async {
+        print('[SyncService] Sync completed successfully');
         onProgress?.call('Sync completed successfully');
 
         // Save sync time
+        print('[SyncService] Saving last sync time: ${syncModel.lastSyncTime}');
         await _localStorage.setString(
           StorageKeys.lastSyncTime,
           syncModel.lastSyncTime,
         );
 
         // Mark sync completed
+        print('[SyncService] Marking sync as completed');
         await _setSyncStatus(false);
 
         return syncModel;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[SyncService] Unexpected error during sync: $e');
+      print('Stack trace: $stackTrace');
+      
+      // Mark sync as completed even on error
       await _setSyncStatus(false);
+      
       final error = AppException.unknown(e.toString());
       onError?.call(error);
       return SyncModel(

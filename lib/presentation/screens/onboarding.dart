@@ -4,9 +4,7 @@ import 'package:municipality_app/core/constants/sizes.dart';
 import 'package:municipality_app/presentation/providers/sync_provider.dart';
 import 'package:municipality_app/presentation/screens/auth/sync_screen.dart';
 import '../../core/constants/app_images.dart';
-import 'widgets/onboarding_button.dart';
 import 'widgets/onboarding_page.dart';
-import 'home/home_screen.dart';
 
 class OnBoardingScreen extends ConsumerStatefulWidget {
   const OnBoardingScreen({super.key});

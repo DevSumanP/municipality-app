@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
+import 'package:municipality_app/core/database/app_database.dart';
 import '../datasources/remote/document_remote_datasource.dart';
 import '../datasources/local/document_local_datasource.dart';
 import '../models/document_model.dart';
-import '../../core/database/tables/documents_table.dart';
 import '../../core/exceptions/app_exceptions.dart';
 
 class DocumentRepository {
@@ -95,31 +95,32 @@ class DocumentRepository {
     }
   }
 
-  Notice _mapTableToNotice(DocumentsTable table) {
-    return Notice(
-      id: table.id,
-      userId: table.userId,
-      title: table.title,
-      description: table.description,
-      image: table.imageUrl,
-      file: table.fileUrl,
-      status: table.status,
-      createdAt: table.createdAt,
-      updatedAt: table.updatedAt,
-      isUpdated: table.isUpdated,
-      imageUrl: table.imageUrl ?? '',
-      fileUrl: table.fileUrl ?? '',
-    );
-  }
+  Notice _mapTableToNotice(DocumentsTable table) {   // or DocumentsData depending on generated name
+  return Notice(
+    id: table.id,
+    userId: table.userId,
+    title: table.title,
+    description: table.description,
+    image: table.imageUrl,
+    file: table.fileUrl,
+    status: table.status,
+    createdAt: table.createdAt,
+    updatedAt: table.updatedAt,
+    isUpdated: table.isUpdated,
+    imageUrl: table.imageUrl ?? '',
+    fileUrl: table.fileUrl ?? '',
+  );
+}
 
-  ScrollingNews _mapTableToScrollingNews(DocumentsTable table) {
-    return ScrollingNews(
-      id: table.id,
-      userId: table.userId,
-      title: table.title,
-      status: table.status,
-      createdAt: table.createdAt,
-      updatedAt: table.updatedAt,
-    );
-  }
+ScrollingNews _mapTableToScrollingNews(DocumentsTable table) {  // same here
+  return ScrollingNews(
+    id: table.id,
+    userId: table.userId,
+    title: table.title,
+    status: table.status,
+    createdAt: table.createdAt,
+    updatedAt: table.updatedAt,
+  );
+}
+
 }

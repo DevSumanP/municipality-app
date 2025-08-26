@@ -1,177 +1,100 @@
 import 'dart:async';
-import 'package:floor/floor.dart';
-import 'package:sqflite/sqflite.dart' as sqflite;
+
+import 'package:drift/drift.dart';
+import 'package:drift/native.dart';
+import 'package:municipality_app/core/database/daos/documents_dao.dart';
+import 'package:municipality_app/core/database/daos/employees_dao.dart';
+import 'package:municipality_app/core/database/daos/media_files_dao.dart';
+import 'package:municipality_app/core/database/daos/services_dao.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+import 'dart:io';
 
 import 'tables/services_table.dart';
 import 'tables/employees_table.dart';
 import 'tables/media_files_table.dart';
 import 'tables/documents_table.dart';
-import 'tables/app_metadata_table.dart';
 
 part 'app_database.g.dart';
 
-@Database(
-  version: 2, // Incremented to trigger database recreation
-  entities: [
-    ServicesTable,
-    EmployeesTable,
-    MediaFilesTable,
-    DocumentsTable,
-    AppMetadataTable,
+@DriftDatabase(
+  tables: [
+    Documents,
+    Employees,
+    Services,
+    MediaFiles,
+  ],
+  daos: [
+    DocumentsDao,
+    EmployeesDao,
+    ServicesDao,
+    MediaFilesDao,
   ],
 )
-abstract class AppDatabase extends FloorDatabase {
-  ServicesDao get servicesDao;
-  EmployeesDao get employeesDao;
-  MediaFilesDao get mediaFilesDao;
-  DocumentsDao get documentsDao;
-  AppMetadataDao get appMetadataDao;
+
+class AppDatabase extends _$AppDatabase {
+  AppDatabase() : super(_openConnection());
+
+  @override
+  int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async{
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async{
+        // Handles migration upgraders here
+        if (from < 2) {
+
+        }
+      },
+      beforeOpen: (details) async{
+        await customStatement('PRAGMA foreign_keys = ON');
+      },
+    );
+  }
+
+  // Helper method to clear all data
+  Future<void> clearAllData() async {
+    await transaction(() async {
+      await documentsDao.deleteAllDocuments();
+      await employeesDao.deleteAllEmployees();
+      await servicesDao.deleteAllServices();
+      await mediaFilesDao.deleteAllMediaFiles();
+    });
+  }
+
+  // Helper method to get database size
+  Future<int> getDatabaseSize() async {
+    try {
+      final dbFolder = await getApplicationDocumentsDirectory();
+      final file = File(p.join(dbFolder.path, 'municipality_app.db'));
+      if (await file.exists()) {
+        return await file.length();
+      }
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Helper method to check if database has data
+  Future<bool> hasData() async {
+    final documentsCount = await documentsDao.getDocumentsCount();
+    final employeesCount = await employeesDao.getEmployeesCount();
+    final servicesCount = await servicesDao.getServicesCount();
+    
+    return documentsCount > 0 || employeesCount > 0 || servicesCount > 0;
+  }
 }
 
-// Database DAOs
-@dao
-abstract class ServicesDao {
-  @Query('SELECT * FROM services WHERE status = 1 ORDER BY `order` ASC')
-  Future<List<ServicesTable>> getAllServices();
-
-  @Query('SELECT * FROM services WHERE id = :id')
-  Future<ServicesTable?> getServiceById(int id);
-
-  @Query('SELECT * FROM services WHERE department_id = :departmentId ORDER BY `order` ASC')
-  Future<List<ServicesTable>> getServicesByDepartment(int departmentId);
-
-  @Query('SELECT * FROM services WHERE is_updated = 1')
-  Future<List<ServicesTable>> getUpdatedServices();
-
-  @insert
-  Future<void> insertService(ServicesTable service);
-
-  @insert
-  Future<void> insertAllServices(List<ServicesTable> services);
-
-  @update
-  Future<void> updateService(ServicesTable service);
-
-  @Query('DELETE FROM services')
-  Future<void> deleteAllServices();
-
-  @Query('DELETE FROM services WHERE id = :id')
-  Future<void> deleteService(int id);
-}
-
-@dao
-abstract class EmployeesDao {
-  @Query('SELECT * FROM employees WHERE status = 1 ORDER BY `order` ASC')
-  Future<List<EmployeesTable>> getAllEmployees();
-
-  @Query('SELECT * FROM employees WHERE id = :id')
-  Future<EmployeesTable?> getEmployeeById(int id);
-
-  @Query('SELECT * FROM employees WHERE department_id = :departmentId ORDER BY `order` ASC')
-  Future<List<EmployeesTable>> getEmployeesByDepartment(int departmentId);
-
-  @Query('SELECT * FROM employees WHERE designation_id = :designationId')
-  Future<List<EmployeesTable>> getEmployeesByDesignation(int designationId);
-
-  @Query('SELECT * FROM employees WHERE category_id = :categoryId')
-  Future<List<EmployeesTable>> getEmployeesByCategory(int categoryId);
-
-  @Query('SELECT * FROM employees WHERE is_updated = 1')
-  Future<List<EmployeesTable>> getUpdatedEmployees();
-
-  @insert
-  Future<void> insertEmployee(EmployeesTable employee);
-
-  @insert
-  Future<void> insertAllEmployees(List<EmployeesTable> employees);
-
-  @update
-  Future<void> updateEmployee(EmployeesTable employee);
-
-  @Query('DELETE FROM employees')
-  Future<void> deleteAllEmployees();
-
-  @Query('DELETE FROM employees WHERE id = :id')
-  Future<void> deleteEmployee(int id);
-}
-
-@dao
-abstract class MediaFilesDao {
-  @Query('SELECT * FROM media_files ORDER BY created_at DESC')
-  Future<List<MediaFilesTable>> getAllMediaFiles();
-
-  @Query('SELECT * FROM media_files WHERE id = :id')
-  Future<MediaFilesTable?> getMediaFileById(int id);
-
-  @Query('SELECT * FROM media_files WHERE type = :type ORDER BY created_at DESC')
-  Future<List<MediaFilesTable>> getMediaFilesByType(String type);
-
-  @Query('SELECT * FROM media_files WHERE is_downloaded = 1')
-  Future<List<MediaFilesTable>> getDownloadedMediaFiles();
-
-  @insert
-  Future<void> insertMediaFile(MediaFilesTable mediaFile);
-
-  @insert
-  Future<void> insertAllMediaFiles(List<MediaFilesTable> mediaFiles);
-
-  @update
-  Future<void> updateMediaFile(MediaFilesTable mediaFile);
-
-  @Query('DELETE FROM media_files')
-  Future<void> deleteAllMediaFiles();
-
-  @Query('DELETE FROM media_files WHERE id = :id')
-  Future<void> deleteMediaFile(int id);
-}
-
-@dao
-abstract class DocumentsDao {
-  @Query('SELECT * FROM documents WHERE status = 1 ORDER BY created_at DESC')
-  Future<List<DocumentsTable>> getAllDocuments();
-
-  @Query('SELECT * FROM documents WHERE id = :id')
-  Future<DocumentsTable?> getDocumentById(int id);
-
-  @Query('SELECT * FROM documents WHERE type = :type ORDER BY created_at DESC')
-  Future<List<DocumentsTable>> getDocumentsByType(String type);
-
-  @Query('SELECT * FROM documents WHERE is_downloaded = 1')
-  Future<List<DocumentsTable>> getDownloadedDocuments();
-
-  @insert
-  Future<void> insertDocument(DocumentsTable document);
-
-  @insert
-  Future<void> insertAllDocuments(List<DocumentsTable> documents);
-
-  @update
-  Future<void> updateDocument(DocumentsTable document);
-
-  @Query('DELETE FROM documents')
-  Future<void> deleteAllDocuments();
-
-  @Query('DELETE FROM documents WHERE id = :id')
-  Future<void> deleteDocument(int id);
-}
-
-@dao
-abstract class AppMetadataDao {
-  @Query('SELECT * FROM app_metadata WHERE key = :key')
-  Future<AppMetadataTable?> getMetadata(String key);
-
-  @Query('SELECT * FROM app_metadata')
-  Future<List<AppMetadataTable>> getAllMetadata();
-
-  @insert
-  Future<void> insertMetadata(AppMetadataTable metadata);
-
-  @update
-  Future<void> updateMetadata(AppMetadataTable metadata);
-
-  @Query('DELETE FROM app_metadata WHERE key = :key')
-  Future<void> deleteMetadata(String key);
-
-  @Query('DELETE FROM app_metadata')
-  Future<void> deleteAllMetadata();
+LazyDatabase _openConnection() {
+  return LazyDatabase(() async{
+    final dbFolder = await getApplicationDocumentsDirectory();
+     final file = File(p.join(dbFolder.path, 'municipality_app.db'));
+    
+    return NativeDatabase.createInBackground(file);
+  });
 }

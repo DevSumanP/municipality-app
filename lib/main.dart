@@ -18,9 +18,7 @@ void main() async {
     await LocalStorage.init();
 
     // Initialize and open the database
-    database = await $FloorAppDatabase
-        .databaseBuilder('app_database.db')
-        .build();
+    database = AppDatabase();
     
     debugPrint('Database initialized successfully');
 

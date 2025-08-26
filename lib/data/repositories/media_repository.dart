@@ -1,7 +1,7 @@
 import 'package:dartz/dartz.dart';
+import 'package:municipality_app/core/database/app_database.dart';
 import '../datasources/local/media_local_datasource.dart';
 import '../models/media_file_model.dart';
-import '../../core/database/tables/media_files_table.dart';
 import '../../core/exceptions/app_exceptions.dart';
 
 class MediaRepository {

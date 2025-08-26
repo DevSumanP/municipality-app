@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
+import 'package:municipality_app/core/database/app_database.dart';
 import '../datasources/remote/employee_remote_datasource.dart';
 import '../datasources/local/employee_local_datasource.dart';
 import '../models/employee_model.dart';
-import '../../core/database/tables/employees_table.dart';
 import '../../core/exceptions/app_exceptions.dart';
 
 class EmployeeRepository {

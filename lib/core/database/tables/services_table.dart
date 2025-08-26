@@ -1,47 +1,24 @@
-import 'package:floor/floor.dart';
+import 'package:drift/drift.dart';
 
-@entity
-class ServicesTable {
-  @primaryKey
-  final int id;
-  final String userId;
-  final int? departmentId;
-  final String title;
-  final String description;
-  final String? proposalSample;
-  final String? video;
-  final String? extraDocument;
-  final String status;
-  final String order;
-  final String createdAt;
-  final String updatedAt;
-  final String isUpdated;
-  final String? videoUrl;
-  final String? fileUrl;
-  final String? extraFileUrl;
-  final String? localVideoPath;
-  final String? localFilePath;
-  final String? localExtraFilePath;
+@DataClassName('ServicesTable')
+class Services extends Table {
+  IntColumn get id => integer()();
+  TextColumn get userId => text()();
+  IntColumn get departmentId => integer().nullable()();
+  TextColumn get title => text()();
+  TextColumn get description => text()();
+  TextColumn get proposalSample => text().nullable()();
+  TextColumn get video => text().nullable()();
+  TextColumn get extraDocument => text().nullable()();
+  TextColumn get status => text()();
+  TextColumn get order => text()();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+  TextColumn get isUpdated => text()();
+  TextColumn get videoUrl => text().nullable()();
+  TextColumn get fileUrl => text().nullable()();
+  TextColumn get extraFileUrl => text().nullable()();
 
-  const ServicesTable({
-    required this.id,
-    required this.userId,
-    this.departmentId,
-    required this.title,
-    required this.description,
-    this.proposalSample,
-    this.video,
-    this.extraDocument,
-    required this.status,
-    required this.order,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.isUpdated,
-    this.videoUrl,
-    this.fileUrl,
-    this.extraFileUrl,
-    this.localVideoPath,
-    this.localFilePath,
-    this.localExtraFilePath,
-  });
+  @override
+  Set<Column> get primaryKey => {id};
 }
