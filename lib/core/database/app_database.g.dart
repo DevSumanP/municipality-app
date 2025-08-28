@@ -607,9 +607,9 @@ class $EmployeesTable extends Employees
   static const VerificationMeta _departmentIdMeta =
       const VerificationMeta('departmentId');
   @override
-  late final GeneratedColumn<int> departmentId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> departmentId = GeneratedColumn<String>(
       'department_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -806,7 +806,7 @@ class $EmployeesTable extends Employees
       categoryId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category_id'])!,
       departmentId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}department_id']),
+          .read(DriftSqlType.string, data['${effectivePrefix}department_id']),
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       phone: attachedDatabase.typeMapping
@@ -843,7 +843,7 @@ class EmployeesTable extends DataClass implements Insertable<EmployeesTable> {
   final String userId;
   final String designationId;
   final String categoryId;
-  final int? departmentId;
+  final String? departmentId;
   final String name;
   final String? phone;
   final String? email;
@@ -880,7 +880,7 @@ class EmployeesTable extends DataClass implements Insertable<EmployeesTable> {
     map['designation_id'] = Variable<String>(designationId);
     map['category_id'] = Variable<String>(categoryId);
     if (!nullToAbsent || departmentId != null) {
-      map['department_id'] = Variable<int>(departmentId);
+      map['department_id'] = Variable<String>(departmentId);
     }
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || phone != null) {
@@ -944,7 +944,7 @@ class EmployeesTable extends DataClass implements Insertable<EmployeesTable> {
       userId: serializer.fromJson<String>(json['userId']),
       designationId: serializer.fromJson<String>(json['designationId']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
-      departmentId: serializer.fromJson<int?>(json['departmentId']),
+      departmentId: serializer.fromJson<String?>(json['departmentId']),
       name: serializer.fromJson<String>(json['name']),
       phone: serializer.fromJson<String?>(json['phone']),
       email: serializer.fromJson<String?>(json['email']),
@@ -966,7 +966,7 @@ class EmployeesTable extends DataClass implements Insertable<EmployeesTable> {
       'userId': serializer.toJson<String>(userId),
       'designationId': serializer.toJson<String>(designationId),
       'categoryId': serializer.toJson<String>(categoryId),
-      'departmentId': serializer.toJson<int?>(departmentId),
+      'departmentId': serializer.toJson<String?>(departmentId),
       'name': serializer.toJson<String>(name),
       'phone': serializer.toJson<String?>(phone),
       'email': serializer.toJson<String?>(email),
@@ -986,7 +986,7 @@ class EmployeesTable extends DataClass implements Insertable<EmployeesTable> {
           String? userId,
           String? designationId,
           String? categoryId,
-          Value<int?> departmentId = const Value.absent(),
+          Value<String?> departmentId = const Value.absent(),
           String? name,
           Value<String?> phone = const Value.absent(),
           Value<String?> email = const Value.absent(),
@@ -1112,7 +1112,7 @@ class EmployeesCompanion extends UpdateCompanion<EmployeesTable> {
   final Value<String> userId;
   final Value<String> designationId;
   final Value<String> categoryId;
-  final Value<int?> departmentId;
+  final Value<String?> departmentId;
   final Value<String> name;
   final Value<String?> phone;
   final Value<String?> email;
@@ -1173,7 +1173,7 @@ class EmployeesCompanion extends UpdateCompanion<EmployeesTable> {
     Expression<String>? userId,
     Expression<String>? designationId,
     Expression<String>? categoryId,
-    Expression<int>? departmentId,
+    Expression<String>? departmentId,
     Expression<String>? name,
     Expression<String>? phone,
     Expression<String>? email,
@@ -1211,7 +1211,7 @@ class EmployeesCompanion extends UpdateCompanion<EmployeesTable> {
       Value<String>? userId,
       Value<String>? designationId,
       Value<String>? categoryId,
-      Value<int?>? departmentId,
+      Value<String?>? departmentId,
       Value<String>? name,
       Value<String?>? phone,
       Value<String?>? email,
@@ -1259,7 +1259,7 @@ class EmployeesCompanion extends UpdateCompanion<EmployeesTable> {
       map['category_id'] = Variable<String>(categoryId.value);
     }
     if (departmentId.present) {
-      map['department_id'] = Variable<int>(departmentId.value);
+      map['department_id'] = Variable<String>(departmentId.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -1340,9 +1340,9 @@ class $ServicesTable extends Services
   static const VerificationMeta _departmentIdMeta =
       const VerificationMeta('departmentId');
   @override
-  late final GeneratedColumn<int> departmentId = GeneratedColumn<int>(
+  late final GeneratedColumn<String> departmentId = GeneratedColumn<String>(
       'department_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -1549,7 +1549,7 @@ class $ServicesTable extends Services
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
       departmentId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}department_id']),
+          .read(DriftSqlType.string, data['${effectivePrefix}department_id']),
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       description: attachedDatabase.typeMapping
@@ -1588,7 +1588,7 @@ class $ServicesTable extends Services
 class ServicesTable extends DataClass implements Insertable<ServicesTable> {
   final int id;
   final String userId;
-  final int? departmentId;
+  final String? departmentId;
   final String title;
   final String description;
   final String? proposalSample;
@@ -1625,7 +1625,7 @@ class ServicesTable extends DataClass implements Insertable<ServicesTable> {
     map['id'] = Variable<int>(id);
     map['user_id'] = Variable<String>(userId);
     if (!nullToAbsent || departmentId != null) {
-      map['department_id'] = Variable<int>(departmentId);
+      map['department_id'] = Variable<String>(departmentId);
     }
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
@@ -1695,7 +1695,7 @@ class ServicesTable extends DataClass implements Insertable<ServicesTable> {
     return ServicesTable(
       id: serializer.fromJson<int>(json['id']),
       userId: serializer.fromJson<String>(json['userId']),
-      departmentId: serializer.fromJson<int?>(json['departmentId']),
+      departmentId: serializer.fromJson<String?>(json['departmentId']),
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       proposalSample: serializer.fromJson<String?>(json['proposalSample']),
@@ -1717,7 +1717,7 @@ class ServicesTable extends DataClass implements Insertable<ServicesTable> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'userId': serializer.toJson<String>(userId),
-      'departmentId': serializer.toJson<int?>(departmentId),
+      'departmentId': serializer.toJson<String?>(departmentId),
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'proposalSample': serializer.toJson<String?>(proposalSample),
@@ -1737,7 +1737,7 @@ class ServicesTable extends DataClass implements Insertable<ServicesTable> {
   ServicesTable copyWith(
           {int? id,
           String? userId,
-          Value<int?> departmentId = const Value.absent(),
+          Value<String?> departmentId = const Value.absent(),
           String? title,
           String? description,
           Value<String?> proposalSample = const Value.absent(),
@@ -1869,7 +1869,7 @@ class ServicesTable extends DataClass implements Insertable<ServicesTable> {
 class ServicesCompanion extends UpdateCompanion<ServicesTable> {
   final Value<int> id;
   final Value<String> userId;
-  final Value<int?> departmentId;
+  final Value<String?> departmentId;
   final Value<String> title;
   final Value<String> description;
   final Value<String?> proposalSample;
@@ -1929,7 +1929,7 @@ class ServicesCompanion extends UpdateCompanion<ServicesTable> {
   static Insertable<ServicesTable> custom({
     Expression<int>? id,
     Expression<String>? userId,
-    Expression<int>? departmentId,
+    Expression<String>? departmentId,
     Expression<String>? title,
     Expression<String>? description,
     Expression<String>? proposalSample,
@@ -1967,7 +1967,7 @@ class ServicesCompanion extends UpdateCompanion<ServicesTable> {
   ServicesCompanion copyWith(
       {Value<int>? id,
       Value<String>? userId,
-      Value<int?>? departmentId,
+      Value<String?>? departmentId,
       Value<String>? title,
       Value<String>? description,
       Value<String?>? proposalSample,
@@ -2011,7 +2011,7 @@ class ServicesCompanion extends UpdateCompanion<ServicesTable> {
       map['user_id'] = Variable<String>(userId.value);
     }
     if (departmentId.present) {
-      map['department_id'] = Variable<int>(departmentId.value);
+      map['department_id'] = Variable<String>(departmentId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -2829,7 +2829,7 @@ typedef $$EmployeesTableCreateCompanionBuilder = EmployeesCompanion Function({
   required String userId,
   required String designationId,
   required String categoryId,
-  Value<int?> departmentId,
+  Value<String?> departmentId,
   required String name,
   Value<String?> phone,
   Value<String?> email,
@@ -2847,7 +2847,7 @@ typedef $$EmployeesTableUpdateCompanionBuilder = EmployeesCompanion Function({
   Value<String> userId,
   Value<String> designationId,
   Value<String> categoryId,
-  Value<int?> departmentId,
+  Value<String?> departmentId,
   Value<String> name,
   Value<String?> phone,
   Value<String?> email,
@@ -2882,7 +2882,7 @@ class $$EmployeesTableFilterComposer
   ColumnFilters<String> get categoryId => $composableBuilder(
       column: $table.categoryId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get departmentId => $composableBuilder(
+  ColumnFilters<String> get departmentId => $composableBuilder(
       column: $table.departmentId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
@@ -2941,7 +2941,7 @@ class $$EmployeesTableOrderingComposer
   ColumnOrderings<String> get categoryId => $composableBuilder(
       column: $table.categoryId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get departmentId => $composableBuilder(
+  ColumnOrderings<String> get departmentId => $composableBuilder(
       column: $table.departmentId,
       builder: (column) => ColumnOrderings(column));
 
@@ -3000,7 +3000,7 @@ class $$EmployeesTableAnnotationComposer
   GeneratedColumn<String> get categoryId => $composableBuilder(
       column: $table.categoryId, builder: (column) => column);
 
-  GeneratedColumn<int> get departmentId => $composableBuilder(
+  GeneratedColumn<String> get departmentId => $composableBuilder(
       column: $table.departmentId, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
@@ -3067,7 +3067,7 @@ class $$EmployeesTableTableManager extends RootTableManager<
             Value<String> userId = const Value.absent(),
             Value<String> designationId = const Value.absent(),
             Value<String> categoryId = const Value.absent(),
-            Value<int?> departmentId = const Value.absent(),
+            Value<String?> departmentId = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String?> phone = const Value.absent(),
             Value<String?> email = const Value.absent(),
@@ -3103,7 +3103,7 @@ class $$EmployeesTableTableManager extends RootTableManager<
             required String userId,
             required String designationId,
             required String categoryId,
-            Value<int?> departmentId = const Value.absent(),
+            Value<String?> departmentId = const Value.absent(),
             required String name,
             Value<String?> phone = const Value.absent(),
             Value<String?> email = const Value.absent(),
@@ -3159,7 +3159,7 @@ typedef $$EmployeesTableProcessedTableManager = ProcessedTableManager<
 typedef $$ServicesTableCreateCompanionBuilder = ServicesCompanion Function({
   Value<int> id,
   required String userId,
-  Value<int?> departmentId,
+  Value<String?> departmentId,
   required String title,
   required String description,
   Value<String?> proposalSample,
@@ -3177,7 +3177,7 @@ typedef $$ServicesTableCreateCompanionBuilder = ServicesCompanion Function({
 typedef $$ServicesTableUpdateCompanionBuilder = ServicesCompanion Function({
   Value<int> id,
   Value<String> userId,
-  Value<int?> departmentId,
+  Value<String?> departmentId,
   Value<String> title,
   Value<String> description,
   Value<String?> proposalSample,
@@ -3208,7 +3208,7 @@ class $$ServicesTableFilterComposer
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get departmentId => $composableBuilder(
+  ColumnFilters<String> get departmentId => $composableBuilder(
       column: $table.departmentId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get title => $composableBuilder(
@@ -3267,7 +3267,7 @@ class $$ServicesTableOrderingComposer
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get departmentId => $composableBuilder(
+  ColumnOrderings<String> get departmentId => $composableBuilder(
       column: $table.departmentId,
       builder: (column) => ColumnOrderings(column));
 
@@ -3329,7 +3329,7 @@ class $$ServicesTableAnnotationComposer
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
-  GeneratedColumn<int> get departmentId => $composableBuilder(
+  GeneratedColumn<String> get departmentId => $composableBuilder(
       column: $table.departmentId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
@@ -3400,7 +3400,7 @@ class $$ServicesTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> userId = const Value.absent(),
-            Value<int?> departmentId = const Value.absent(),
+            Value<String?> departmentId = const Value.absent(),
             Value<String> title = const Value.absent(),
             Value<String> description = const Value.absent(),
             Value<String?> proposalSample = const Value.absent(),
@@ -3436,7 +3436,7 @@ class $$ServicesTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String userId,
-            Value<int?> departmentId = const Value.absent(),
+            Value<String?> departmentId = const Value.absent(),
             required String title,
             required String description,
             Value<String?> proposalSample = const Value.absent(),

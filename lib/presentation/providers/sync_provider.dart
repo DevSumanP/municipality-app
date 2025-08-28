@@ -58,6 +58,15 @@ class SyncNotifier extends StateNotifier<SyncState> {
 
   SyncNotifier(this._syncService) : super(const SyncState());
 
+  Future<void> _updateProgress(String message, double progress) async {
+    state = state.copyWith(
+      currentProgress: message,
+      progressPercentage: progress,
+    );
+    // Add a small delay to allow UI to update
+    await Future.delayed(const Duration(milliseconds: 100));
+  }
+
   Future<void> syncAllData({bool forceSync = false}) async {
     if (state.isSyncing) return;
 
@@ -66,20 +75,16 @@ class SyncNotifier extends StateNotifier<SyncState> {
       return;
     }
 
-    state = state.copyWith(
-      isSyncing: true,
-      error: null,
-      currentProgress: 'Preparing sync...',
-      progressPercentage: 0.0,
-    );
+    await _updateProgress('Preparing sync...', 5.0);
+    state = state.copyWith(isSyncing: true, error: null);
 
     try {
+      // Update progress before starting sync
+      await _updateProgress('Starting sync...', 10.0);
+      
       final syncModel = await _syncService.syncAllData(
-        onProgress: (progress) {
-          state = state.copyWith(
-            currentProgress: progress,
-            progressPercentage: _calculateProgress(progress),
-          );
+        onProgress: (progress) async {
+          await _updateProgress(progress, _calculateProgress(progress));
         },
         onError: (error) {
           state = state.copyWith(
@@ -133,10 +138,13 @@ class SyncNotifier extends StateNotifier<SyncState> {
 
   double _calculateProgress(String progressMessage) {
     // Simple progress calculation based on message content
-    if (progressMessage.contains('Starting')) return 10.0;
-    if (progressMessage.contains('services')) return 25.0;
+    progressMessage = progressMessage.toLowerCase();
+    if (progressMessage.contains('starting')) return 15.0;
+    if (progressMessage.contains('services')) return 30.0;
     if (progressMessage.contains('employees')) return 50.0;
-    if (progressMessage.contains('notices')) return 75.0;
+    if (progressMessage.contains('notices')) return 70.0;
+    if (progressMessage.contains('news')) return 85.0;
+    if (progressMessage.contains('final')) return 95.0;
     if (progressMessage.contains('completed')) return 100.0;
     return state.progressPercentage;
   }

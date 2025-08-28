@@ -21,7 +21,7 @@ class EmployeesDao extends DatabaseAccessor<AppDatabase> with _$EmployeesDaoMixi
   }
 
   // Get employees by department
-  Future<List<EmployeesTable>> getEmployeesByDepartment(int departmentId) async {
+  Future<List<EmployeesTable>> getEmployeesByDepartment(String departmentId) async {
     return await (select(employees)
       ..where((tbl) => tbl.departmentId.equals(departmentId))
       ..orderBy([(tbl) => OrderingTerm(expression: tbl.order)])
@@ -52,7 +52,7 @@ class EmployeesDao extends DatabaseAccessor<AppDatabase> with _$EmployeesDaoMixi
   }
 
   // Get employees count by department
-  Future<int> getEmployeesCountByDepartment(int departmentId) async {
+  Future<int> getEmployeesCountByDepartment(String departmentId) async {
     final query = selectOnly(employees)
       ..addColumns([employees.id.count()])
       ..where(employees.departmentId.equals(departmentId));
@@ -83,7 +83,7 @@ class EmployeesDao extends DatabaseAccessor<AppDatabase> with _$EmployeesDaoMixi
   }
 
   // Delete employees by department
-  Future<int> deleteEmployeesByDepartment(int departmentId) async {
+  Future<int> deleteEmployeesByDepartment(String departmentId) async {
     return await (delete(employees)..where((tbl) => tbl.departmentId.equals(departmentId))).go();
   }
 

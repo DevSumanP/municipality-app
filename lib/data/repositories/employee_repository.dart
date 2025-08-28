@@ -45,14 +45,29 @@ class EmployeeRepository {
   }
 
   Future<Either<AppException, EmployeeData>> syncEmployees() async {
+    print('[EmployeeRepository] Starting employees sync...');
     try {
+      print('[EmployeeRepository] Fetching employees from remote...');
       final remoteResult = await remoteDataSource.getEmployees();
+      print('[EmployeeRepository] Retrieved ${remoteResult.data.employees.length} employees from remote');
+      
+      print('[EmployeeRepository] Saving employees to local database...');
       await localDataSource.saveEmployees(remoteResult.data.employees);
+      print('[EmployeeRepository] Successfully saved ${remoteResult.data.employees.length} employees to local database');
+      
+      // Log some statistics
+      print('[EmployeeRepository] Sync stats - Designations: ${remoteResult.data.designations.length}, Categories: ${remoteResult.data.categories.length}, Departments: ${remoteResult.data.departments.length}');
+      
       return Right(remoteResult.data);
     } on AppException catch (e) {
+      print('[EmployeeRepository] Error in syncEmployees (AppException): ${e.message}');
       return Left(e);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[EmployeeRepository] Unexpected error in syncEmployees: $e');
+      print('[EmployeeRepository] Stack trace: $stackTrace');
       return Left(AppException.unknown(e.toString()));
+    } finally {
+      print('[EmployeeRepository] Completed employees sync');
     }
   }
 
@@ -68,7 +83,7 @@ class EmployeeRepository {
     }
   }
 
-  Future<Either<AppException, List<Employee>>> getEmployeesByDepartment(int departmentId) async {
+  Future<Either<AppException, List<Employee>>> getEmployeesByDepartment(String departmentId) async {
     try {
       final localEmployees = await localDataSource.getEmployeesByDepartment(departmentId);
       return Right(localEmployees.map((e) => _mapTableToModel(e)).toList());

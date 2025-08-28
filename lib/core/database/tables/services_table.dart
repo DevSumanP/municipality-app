@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 class Services extends Table {
   IntColumn get id => integer()();
   TextColumn get userId => text()();
-  IntColumn get departmentId => integer().nullable()();
+  TextColumn get departmentId => text().nullable()();
   TextColumn get title => text()();
   TextColumn get description => text()();
   TextColumn get proposalSample => text().nullable()();

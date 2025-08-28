@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:municipality_app/core/constants/sizes.dart';
 import 'package:municipality_app/presentation/providers/auth_provider.dart';
-import 'package:municipality_app/presentation/screens/onboarding.dart';
+import 'package:municipality_app/presentation/screens/onboarding/onboarding.dart';
 import '../../../core/utils/spacing_styles.dart';
 import 'widgets/signin_form.dart';
 import 'widgets/signin_header.dart';

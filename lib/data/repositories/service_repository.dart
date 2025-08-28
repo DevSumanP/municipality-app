@@ -39,14 +39,26 @@ class ServiceRepository {
   }
 
   Future<Either<AppException, List<Service>>> syncServices() async {
+    print('[ServiceRepository] Starting services sync...');
     try {
+      print('[ServiceRepository] Fetching services from remote...');
       final remoteResult = await remoteDataSource.getServices();
+      print('[ServiceRepository] Retrieved ${remoteResult.data.services.length} services from remote');
+      
+      print('[ServiceRepository] Saving services to local database...');
       await localDataSource.saveServices(remoteResult.data.services);
+      print('[ServiceRepository] Successfully saved services to local database');
+      
       return Right(remoteResult.data.services);
     } on AppException catch (e) {
+      print('[ServiceRepository] Error in syncServices (AppException): ${e.message}');
       return Left(e);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('[ServiceRepository] Unexpected error in syncServices: $e');
+      print('[ServiceRepository] Stack trace: $stackTrace');
       return Left(AppException.unknown(e.toString()));
+    } finally {
+      print('[ServiceRepository] Completed services sync');
     }
   }
 
@@ -62,7 +74,7 @@ class ServiceRepository {
     }
   }
 
-  Future<Either<AppException, List<Service>>> getServicesByDepartment(int departmentId) async {
+  Future<Either<AppException, List<Service>>> getServicesByDepartment(String departmentId) async {
     try {
       final localServices = await localDataSource.getServicesByDepartment(departmentId);
       return Right(localServices.map((e) => _mapTableToModel(e)).toList());

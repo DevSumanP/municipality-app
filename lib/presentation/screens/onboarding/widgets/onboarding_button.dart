@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:municipality_app/core/utils/app_utils.dart';
 
-import '../../../../core/constants/colors.dart';
-import '../../../../core/constants/sizes.dart';
+import '../../../../../core/constants/colors.dart';
+import '../../../../../core/constants/sizes.dart';
 
 class OnBoardingButton extends StatelessWidget {
   const OnBoardingButton({super.key});

@@ -15,7 +15,7 @@ class ServiceLocalDataSource {
     return await database.servicesDao.getServiceById(id);
   }
 
-  Future<List<ServicesTable>> getServicesByDepartment(int departmentId) async {
+  Future<List<ServicesTable>> getServicesByDepartment(String departmentId) async {
     return await database.servicesDao.getServicesByDepartment(departmentId);
   }
 

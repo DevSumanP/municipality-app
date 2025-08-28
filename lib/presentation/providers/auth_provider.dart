@@ -11,7 +11,7 @@ import '../../core/exceptions/app_exceptions.dart';
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final dioClient = ref.read(dioClientProvider);
   final localStorage = LocalStorage();
-  
+
   return AuthRepository(
     remoteDataSource: AuthRemoteDataSource(dioClient: dioClient),
     localDataSource: AuthLocalDataSource(localStorage: localStorage),
@@ -27,7 +27,7 @@ class AuthState {
   final String? accessToken;
 
   const AuthState({
-    this.isLoading = false,
+    this.isLoading = true,
     this.isLoggedIn = false,
     this.user,
     this.error,
@@ -63,48 +63,44 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _initializeAuth() async {
-    state = state.copyWith(isLoading: true);
-
     try {
-      // Check if user is already logged in
+      state = state.copyWith(isLoading: true);
+
       final isLoggedInResult = await _authRepository.isLoggedIn();
-      
-      isLoggedInResult.fold(
+
+      await isLoggedInResult.fold(
         (error) {
           state = state.copyWith(
             isLoading: false,
             error: error.message,
+            isLoggedIn: false,
           );
         },
         (isLoggedIn) async {
           if (isLoggedIn) {
-            // Get stored auth data
             final authDataResult = await _authRepository.getLocalAuthData();
             final accessTokenResult = await _authRepository.getAccessToken();
-            
+
             authDataResult.fold(
-              (error) {
-                state = state.copyWith(
-                  isLoading: false,
-                  error: error.message,
-                );
-              },
-              (authData) {
-                accessTokenResult.fold(
-                  (error) {
-                    state = state.copyWith(
-                      isLoading: false,
-                      error: error.message,
-                    );
-                  },
-                  (accessToken) {
-                    state = state.copyWith(
-                      isLoading: false,
-                      isLoggedIn: true,
-                      user: authData?.data.user,
-                      accessToken: accessToken,
-                    );
-                  },
+              (error) => state = state.copyWith(
+                isLoading: false,
+                error: error.message,
+                isLoggedIn: false,
+              ),
+              (authData) async {
+                await accessTokenResult.fold(
+                  (error) => state = state.copyWith(
+                    isLoading: false,
+                    error: error.message,
+                    isLoggedIn: false,
+                  ),
+                  (accessToken) => state = state.copyWith(
+                    isLoading: false,
+                    isLoggedIn: true,
+                    user: authData?.data.user,
+                    accessToken: accessToken,
+                    error: null,
+                  ),
                 );
               },
             );
@@ -112,6 +108,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             state = state.copyWith(
               isLoading: false,
               isLoggedIn: false,
+              error: null,
             );
           }
         },
@@ -119,7 +116,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: 'Failed to initialize authentication: $e',
+        isLoggedIn: false,
       );
     }
   }
@@ -134,7 +132,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       final result = await _authRepository.login(email, password);
-      
+
       result.fold(
         (error) {
           print('Login failed with error: ${error.message}');
@@ -178,7 +176,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     try {
       final result = await _authRepository.logout();
-      
+
       result.fold(
         (error) {
           // Even if logout fails on server, clear local data

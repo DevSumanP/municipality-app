@@ -1,9 +1,27 @@
+
+enum AppExceptionType {
+  network,
+  timeout,
+  noInternet,
+  unauthorized,
+  forbidden,
+  notFound,
+  server,
+  validation,
+  database,
+  storage,
+  fileSystem,
+  unknown,
+  parsing;
+}
+
 abstract class AppException implements Exception {
   final String message;
   final String? code;
   final dynamic data;
+  final AppExceptionType type;
 
-  const AppException(this.message, {this.code, this.data});
+  const AppException(this.message, {this.code, this.data, this.type = AppExceptionType.unknown});
 
   // Network exceptions
   static AppException network(String message) => NetworkException(message);

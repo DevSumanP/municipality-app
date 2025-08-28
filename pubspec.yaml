@@ -53,6 +53,9 @@ dependencies:
   iconsax: ^0.0.8
   google_fonts: ^6.3.0
   drift_flutter: ^0.2.5
+  carousel_slider: ^5.1.1
+  flutter_shimmer: ^2.1.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

@@ -15,7 +15,7 @@ class EmployeeLocalDataSource {
     return await database.employeesDao.getEmployeeById(id);
   }
 
-  Future<List<EmployeesTable>> getEmployeesByDepartment(int departmentId) async {
+  Future<List<EmployeesTable>> getEmployeesByDepartment(String departmentId) async {
     return await database.employeesDao.getEmployeesByDepartment(departmentId);
   }
 

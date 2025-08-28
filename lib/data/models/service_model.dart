@@ -38,7 +38,7 @@ class ServiceData {
 class Service {
   final int id;
   final String userId;
-  final int? departmentId;
+  final String? departmentId;
   final String title;
   final String description;
   final String? proposalSample;
@@ -104,6 +104,8 @@ class Service {
     );
   }
 }
+
+
 
 
 class ResponsiblePerson {

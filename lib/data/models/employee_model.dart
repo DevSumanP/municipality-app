@@ -56,7 +56,7 @@ class Employee {
   final String userId;
   final String designationId;
   final String categoryId;
-  final int? departmentId;
+  final String? departmentId;
   final String name;
   final String? phone;
   final String? email;

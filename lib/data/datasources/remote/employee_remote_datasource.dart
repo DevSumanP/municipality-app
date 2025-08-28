@@ -11,21 +11,49 @@ class EmployeeRemoteDataSource {
 
   Future<EmployeeModel> getEmployees() async {
     try {
+      print('[EmployeeRemoteDataSource] Fetching employees from: ${ApiEndpoints.employees}');
       final response = await dioClient.get(ApiEndpoints.employees);
+      print('[EmployeeRemoteDataSource] Response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return EmployeeModel.fromJson(response.data);
+        try {
+          final jsonData = response.data;
+          print('[EmployeeRemoteDataSource] Response data type: ${jsonData.runtimeType}');
+          
+          if (jsonData is! Map<String, dynamic>) {
+            throw const FormatException('Invalid response format: Expected JSON object');
+          }
+          
+          if (jsonData['data'] == null) {
+            print('[EmployeeRemoteDataSource] Missing data field in response');
+            throw const FormatException('Missing data field in response');
+          }
+          
+          final employeeModel = EmployeeModel.fromJson(jsonData);
+          print('[EmployeeRemoteDataSource] Successfully parsed ${employeeModel.data.employees.length} employees');
+          return employeeModel;
+        } catch (e, stackTrace) {
+          print('[EmployeeRemoteDataSource] Error parsing employee data: $e');
+          print('Stack trace: $stackTrace');
+          rethrow;
+        }
       } else {
-        throw AppException.server('Failed to fetch employees');
+        final errorMsg = 'Failed to fetch employees. Status: ${response.statusCode}';
+        print('[EmployeeRemoteDataSource] $errorMsg');
+        throw AppException.server(errorMsg);
       }
     } on DioException catch (e) {
+      final errorMsg = 'Network error: ${e.message}';
+      print('[EmployeeRemoteDataSource] $errorMsg');
       if (e.response?.statusCode == 401) {
         throw AppException.unauthorized('Session expired');
       } else {
-        throw AppException.network('Network error occurred');
+        throw AppException.network(errorMsg);
       }
-    } catch (e) {
-      throw AppException.unknown('An unknown error occurred');
+    } catch (e, stackTrace) {
+      print('[EmployeeRemoteDataSource] Unexpected error: $e');
+      print('Stack trace: $stackTrace');
+      throw AppException.unknown('An error occurred while fetching employees: $e');
     }
   }
 }

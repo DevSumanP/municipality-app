@@ -49,9 +49,10 @@ class DioClient {
   Future<Response> download(
     String url,
     String savePath, {
+    CancelToken? cancelToken,
     Function(int, int)? onReceiveProgress,
   }) {
-    return _dio.download(url, savePath, onReceiveProgress: onReceiveProgress);
+    return _dio.download(url, savePath, cancelToken: cancelToken, onReceiveProgress: onReceiveProgress);
   }
 
   Future<Response> head(String url) {

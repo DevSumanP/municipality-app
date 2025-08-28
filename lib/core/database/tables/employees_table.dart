@@ -6,7 +6,7 @@ class Employees extends Table {
   TextColumn get userId => text()();
   TextColumn get designationId => text()();
   TextColumn get categoryId => text()();
-  IntColumn get departmentId => integer().nullable()();
+  TextColumn get departmentId => text().nullable()();
   TextColumn get name => text()();
   TextColumn get phone => text().nullable()();
   TextColumn get email => text().nullable()();

@@ -21,7 +21,7 @@ class ServicesDao extends DatabaseAccessor<AppDatabase> with _$ServicesDaoMixin 
   }
 
   // Get services by department
-  Future<List<ServicesTable>> getServicesByDepartment(int departmentId) async {
+  Future<List<ServicesTable>> getServicesByDepartment(String departmentId) async {
     return await (select(services)
       ..where((tbl) => tbl.departmentId.equals(departmentId))
       ..orderBy([(tbl) => OrderingTerm(expression: tbl.order)])
@@ -36,7 +36,7 @@ class ServicesDao extends DatabaseAccessor<AppDatabase> with _$ServicesDaoMixin 
   }
 
   // Get services count by department
-  Future<int> getServicesCountByDepartment(int departmentId) async {
+  Future<int> getServicesCountByDepartment(String departmentId) async {
     final query = selectOnly(services)
       ..addColumns([services.id.count()])
       ..where(services.departmentId.equals(departmentId));
@@ -67,7 +67,7 @@ class ServicesDao extends DatabaseAccessor<AppDatabase> with _$ServicesDaoMixin 
   }
 
   // Delete services by department
-  Future<int> deleteServicesByDepartment(int departmentId) async {
+  Future<int> deleteServicesByDepartment(String departmentId) async {
     return await (delete(services)..where((tbl) => tbl.departmentId.equals(departmentId))).go();
   }
 
