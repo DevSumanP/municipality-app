@@ -4,9 +4,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:municipality_app/core/constants/sizes.dart';
 import 'package:municipality_app/presentation/providers/auth_provider.dart';
 import 'package:municipality_app/presentation/screens/onboarding/onboarding.dart';
-import 'package:municipality_app/presentation/screens/home/home_screen.dart';
 import '../../../../core/utils/app_utils.dart';
-import '../../../providers/sync_provider.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
@@ -22,6 +20,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   bool hidePassword = true;
   bool rememberMe = false;
 
+
   @override
   void initState() {
     super.initState();
@@ -29,36 +28,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
   }
 
   void _navigateAfterLogin() {
-  if (!mounted) return;
-  
-  ref.read(syncRepositoryProvider).needsSync().then((needsSyncResult) {
-    if (!mounted) return;
-    
-    if (needsSyncResult.isRight() && needsSyncResult.getOrElse(() => false)) {
-      // If sync is needed, show OnBoardingScreen
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
-        (route) => false,
-      );
-    } else {
-      // If no sync needed or error occurred, go to HomeScreen
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
-    }
-  }).catchError((error) {
-    // If there's an error, just go to HomeScreen
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => const OnBoardingScreen()),
       (route) => false,
     );
-  });
-}
+  }
 
   void _togglePasswordVisibility() {
     setState(() => hidePassword = !hidePassword);
@@ -68,12 +44,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     if (_formKey.currentState!.validate()) {
       ref.read(authProvider.notifier).clearError();
       await ref.read(authProvider.notifier).login(
-            emailController.text.trim().toLowerCase(),
-            passwordController.text.trim(),
-          );
+        emailController.text.trim().toLowerCase(),
+        passwordController.text.trim(),
+      );
     }
   }
-  
+
   
   @override
   void dispose() {
@@ -81,7 +57,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     passwordController.dispose();
     super.dispose();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +66,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         _navigateAfterLogin();
       }
     });
-
+    
     final authState = ref.watch(authProvider);
 
     // Clear error when user starts typing
@@ -104,8 +79,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(vertical: AppSizes.spaceBtwSections),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.spaceBtwSections),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -179,8 +153,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       : () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text('Forgot password feature coming soon'),
+                              content: Text('Forgot password feature coming soon'),
                             ),
                           );
                         },
@@ -223,33 +196,13 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     : () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content:
-                                Text('Account creation feature coming soon'),
+                            content: Text('Account creation feature coming soon'),
                           ),
                         );
                       },
                 child: const Text('Create Account'),
               ),
-            ),
-
-            // Error message container (unified)
-            if (authState.hasError) ...[
-              const SizedBox(height: AppSizes.spaceBtwItems),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.withOpacity(0.3)),
-                ),
-                child: Text(
-                  authState.error ?? 'Unknown error',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
+            ),  
           ],
         ),
       ),

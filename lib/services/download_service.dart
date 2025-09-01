@@ -1,413 +1,442 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
-import 'package:dio/dio.dart';
 import '../core/network/dio_client.dart';
 import '../core/storage/file_manager.dart';
 import '../core/constants/app_constants.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/utils/app_utils.dart';
 import '../data/datasources/remote/media_remote_datasource.dart';
+import '../data/datasources/local/media_local_datasource.dart';
+import '../data/models/media_file_model.dart';
+import '../data/models/document_model.dart';
+import '../data/models/service_model.dart';
+import '../presentation/providers/database_provider.dart';
 
 final downloadServiceProvider = Provider<DownloadService>((ref) {
   final dioClient = ref.read(dioClientProvider);
+  final database = ref.read(appDatabaseProvider);
   final mediaRemoteDataSource = MediaRemoteDataSource(dioClient: dioClient);
+  final mediaLocalDataSource = MediaLocalDataSource(database: database);
+  
   return DownloadService(
     dioClient: dioClient,
     mediaRemoteDataSource: mediaRemoteDataSource,
+    mediaLocalDataSource: mediaLocalDataSource,
   );
 });
 
 class DownloadService {
   final DioClient dioClient;
   final MediaRemoteDataSource mediaRemoteDataSource;
-  final Map<String, CancelToken> _activeTasks = {};
+  final MediaLocalDataSource mediaLocalDataSource;
 
   DownloadService({
     required this.dioClient,
     required this.mediaRemoteDataSource,
+    required this.mediaLocalDataSource,
   });
 
-  Future<String?> downloadFile({
-    required String url,
-    required String fileName,
-    required String folderType,
-    Function(int, int)? onProgress,
-    Function(String)? onStatusUpdate,
-    String? taskId,
+  // Download all media files for offline use
+  Future<DownloadResult> downloadAllMediaFiles({
+    required List<Notice> notices,
+    required List<Video> videos,
+    required List<Service> services,
+    Function(String)? onProgress,
+    Function(double)? onProgressPercent,
+    Function(String)? onError,
   }) async {
-    final downloadTaskId = taskId ?? url.hashCode.toString();
+    final List<MediaFileModel> allMediaFiles = [];
+    final List<String> downloadedPaths = [];
+    final List<String> failedDownloads = [];
     
     try {
-      // Create cancel token for this download
-      final cancelToken = CancelToken();
-      _activeTasks[downloadTaskId] = cancelToken;
+      onProgress?.call('Preparing media files for download...');
 
-      // Validate URL
-      if (url.isEmpty || !Uri.parse(url).isAbsolute) {
-        throw AppException.validation('Invalid download URL');
+      // Collect all media files from different sources
+      allMediaFiles.addAll(_extractNoticeMediaFiles(notices));
+      allMediaFiles.addAll(_extractVideoMediaFiles(videos));
+      allMediaFiles.addAll(_extractServiceMediaFiles(services));
+
+      onProgress?.call('Found ${allMediaFiles.length} media files to download');
+
+      if (allMediaFiles.isEmpty) {
+        return DownloadResult(
+          totalFiles: 0,
+          downloadedFiles: 0,
+          failedFiles: 0,
+          downloadedPaths: [],
+          failedDownloads: [],
+        );
       }
 
-      onStatusUpdate?.call('Validating file...');
+      // Save media file records to database
+      await mediaLocalDataSource.saveMediaFiles(allMediaFiles);
 
-      // Check if file exists and get its size
-      if (!await checkFileExists(url)) {
-        throw AppException.notFound('File not found on server');
-      }
+      // Download each file
+      for (int i = 0; i < allMediaFiles.length; i++) {
+        final mediaFile = allMediaFiles[i];
+        final progress = (i / allMediaFiles.length) * 100;
+        
+        onProgressPercent?.call(progress);
+        onProgress?.call('Downloading ${mediaFile.title} (${i + 1}/${allMediaFiles.length})');
 
-      // Validate file size before download
-      if (!await _validateFileSize(url, folderType)) {
-        throw AppException.validation('File size exceeds ${_getMaxSizeForType(folderType)}MB limit');
-      }
-
-      onStatusUpdate?.call('Preparing download...');
-
-      // Generate unique filename to avoid conflicts
-      final uniqueFileName = AppUtils.generateUniqueFileName(fileName);
-      
-      // Get appropriate folder path
-      final folderPath = await FileManager.getFolderPath(_getFolderName(folderType));
-      final filePath = path.join(folderPath, uniqueFileName);
-
-      // Check available space
-      await _checkAvailableSpace(folderPath, url);
-
-      onStatusUpdate?.call('Starting download...');
-
-      // Download file with progress tracking
-      await dioClient.download(
-        url,
-        filePath,
-        cancelToken: cancelToken,
-        onReceiveProgress: (received, total) {
-          if (total > 0) {
-            onProgress?.call(received, total);
+        try {
+          // Skip if already downloaded
+          if (mediaFile.isDownloaded && mediaFile.localPath != null) {
+            final file = File(mediaFile.localPath!);
+            if (await file.exists()) {
+              downloadedPaths.add(mediaFile.localPath!);
+              continue;
+            }
           }
-        },
+
+          final downloadedPath = await _downloadSingleFile(mediaFile);
+          
+          if (downloadedPath != null) {
+            // Update database with local path
+            await mediaLocalDataSource.markAsDownloaded(mediaFile.id, downloadedPath);
+            downloadedPaths.add(downloadedPath);
+            
+            onProgress?.call('Downloaded: ${mediaFile.title}');
+          } else {
+            failedDownloads.add(mediaFile.title);
+            onError?.call('Failed to download: ${mediaFile.title}');
+          }
+        } catch (e) {
+          failedDownloads.add(mediaFile.title);
+          onError?.call('Error downloading ${mediaFile.title}: $e');
+          print('Error downloading ${mediaFile.title}: $e');
+        }
+
+        // Small delay to prevent overwhelming the server
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      onProgressPercent?.call(100.0);
+      onProgress?.call('Download completed');
+
+      return DownloadResult(
+        totalFiles: allMediaFiles.length,
+        downloadedFiles: downloadedPaths.length,
+        failedFiles: failedDownloads.length,
+        downloadedPaths: downloadedPaths,
+        failedDownloads: failedDownloads,
       );
 
-      // Verify downloaded file
+    } catch (e) {
+      onError?.call('Download service error: $e');
+      return DownloadResult(
+        totalFiles: allMediaFiles.length,
+        downloadedFiles: downloadedPaths.length,
+        failedFiles: allMediaFiles.length - downloadedPaths.length,
+        downloadedPaths: downloadedPaths,
+        failedDownloads: failedDownloads,
+      );
+    }
+  }
+
+  // Download single file
+  Future<String?> _downloadSingleFile(MediaFileModel mediaFile) async {
+    if (mediaFile.url.isEmpty) return null;
+
+    try {
+      // Check if file exists on server
+      if (!await mediaRemoteDataSource.checkFileExists(mediaFile.url)) {
+        return null;
+      }
+
+      // Generate unique filename
+      final fileName = _generateFileName(mediaFile);
+      final folderPath = await _getFolderPath(mediaFile.type);
+      final filePath = path.join(folderPath, fileName);
+
+      // Download file
+      await mediaRemoteDataSource.downloadFile(
+        mediaFile.url,
+        filePath,
+      );
+
+      // Verify download
       final file = File(filePath);
-      if (!await file.exists()) {
-        throw AppException.unknown('Download completed but file not found');
-      }
-
-      // Verify file size
-      final fileSize = await file.length();
-      if (fileSize == 0) {
-        await file.delete();
-        throw AppException.unknown('Downloaded file is empty');
-      }
-
-      onStatusUpdate?.call('Download completed');
-      return filePath;
-
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.cancel) {
-        throw AppException.unknown('Download was cancelled');
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-                 e.type == DioExceptionType.receiveTimeout) {
-        throw AppException.network('Download timeout. Please check your connection and try again.');
+      if (await file.exists()) {
+        return filePath;
       } else {
-        throw AppException.network('Download failed: ${e.message}');
+        return null;
       }
     } catch (e) {
-      if (e is AppException) {
-        rethrow;
-      }
-      throw AppException.unknown('Download failed: ${e.toString()}');
-    } finally {
-      _activeTasks.remove(downloadTaskId);
-    }
-  }
-
-  Future<DownloadBatch> downloadMultipleFiles({
-    required List<DownloadItem> items,
-    Function(DownloadProgress)? onProgress,
-    Function(String)? onStatusUpdate,
-    String? batchId,
-  }) async {
-    final downloadBatchId = batchId ?? DateTime.now().millisecondsSinceEpoch.toString();
-    final batch = DownloadBatch(id: downloadBatchId, items: items);
-    
-    try {
-      for (int i = 0; i < items.length; i++) {
-        final item = items[i];
-        final taskId = '${downloadBatchId}_$i';
-        
-        try {
-          onStatusUpdate?.call('Downloading ${item.fileName} (${i + 1}/${items.length})');
-          
-          final filePath = await downloadFile(
-            url: item.url,
-            fileName: item.fileName,
-            folderType: item.folderType,
-            taskId: taskId,
-            onProgress: (received, total) {
-              batch.updateProgress(i, received, total);
-              onProgress?.call(DownloadProgress(
-                currentItem: i,
-                totalItems: items.length,
-                currentFileName: item.fileName,
-                currentReceived: received,
-                currentTotal: total,
-                batchReceived: batch.totalReceived,
-                batchTotal: batch.totalSize,
-              ));
-            },
-            onStatusUpdate: (status) {
-              batch.updateItemStatus(i, status);
-            },
-          );
-
-          if (filePath != null) {
-            batch.completeItem(i, filePath);
-          } else {
-            batch.failItem(i, 'Download returned null path');
-          }
-
-        } catch (e) {
-          batch.failItem(i, e.toString());
-          // Continue with other downloads unless it's a critical error
-          if (e is AppException) {
-            break; // Stop all downloads if cancelled
-          }
-        }
-      }
-
-      batch.complete();
-      return batch;
-
-    } catch (e) {
-      batch.fail(e.toString());
-      throw AppException.unknown('Batch download failed: ${e.toString()}');
-    }
-  }
-
-  Future<bool> checkFileExists(String url) async {
-    try {
-      final response = await dioClient.head(url);
-      return response.statusCode == 200;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<int?> getFileSize(String url) async {
-    try {
-      final response = await dioClient.head(url);
-      final contentLength = response.headers.value('content-length');
-      return contentLength != null ? int.tryParse(contentLength) : null;
-    } catch (e) {
+      print('Error downloading file ${mediaFile.title}: $e');
       return null;
     }
   }
 
-  Future<void> cancelDownload(String taskId) async {
-    final cancelToken = _activeTasks[taskId];
-    if (cancelToken != null && !cancelToken.isCancelled) {
-      cancelToken.cancel('User cancelled download');
-    }
-  }
+  // Extract media files from notices
+  List<MediaFileModel> _extractNoticeMediaFiles(List<Notice> notices) {
+    final List<MediaFileModel> mediaFiles = [];
+    
+    for (final notice in notices) {
+      // Add image if exists
+      if (notice.imageUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: notice.id * 10, // Unique ID for image
+          userId: notice.userId,
+          title: '${notice.title}_image',
+          type: 'image',
+          url: notice.imageUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: notice.createdAt,
+          updatedAt: notice.updatedAt,
+        ));
+      }
 
-  Future<void> cancelAllDownloads() async {
-    for (final token in _activeTasks.values) {
-      if (!token.isCancelled) {
-        token.cancel('All downloads cancelled');
+      // Add file if exists
+      if (notice.fileUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: notice.id * 10 + 1, // Unique ID for file
+          userId: notice.userId,
+          title: '${notice.title}_file',
+          type: 'document',
+          url: notice.fileUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: notice.createdAt,
+          updatedAt: notice.updatedAt,
+        ));
       }
     }
-    _activeTasks.clear();
+    
+    return mediaFiles;
   }
 
-  Future<List<String>> getDownloadedFiles(String folderType) async {
-    try {
-      final folderPath = await FileManager.getFolderPath(_getFolderName(folderType));
-      final files = await FileManager.listFilesInFolder(folderPath);
-      return files.whereType<File>().map((f) => f.path).toList();
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Future<void> clearDownloads(String folderType) async {
-    try {
-      await FileManager.clearFolder(_getFolderName(folderType));
-    } catch (e) {
-      throw AppException.unknown('Failed to clear downloads: ${e.toString()}');
-    }
-  }
-
-  Future<int> getDownloadsFolderSize(String folderType) async {
-    try {
-      final folderPath = await FileManager.getFolderPath(_getFolderName(folderType));
-      return await FileManager.getFolderSize(folderPath);
-    } catch (e) {
-      return 0;
-    }
-  }
-
-  // Private helper methods
-  Future<bool> _validateFileSize(String url, String folderType) async {
-    final fileSize = await getFileSize(url);
-    if (fileSize == null) return true; // Can't validate, allow download
-
-    final maxSize = _getMaxSizeInBytes(folderType);
-    return fileSize <= maxSize;
-  }
-
-  Future<void> _checkAvailableSpace(String folderPath, String url) async {
-    try {
-      final fileSize = await getFileSize(url) ?? 0;
-      final availableSpace = await FileManager.getFolderSize(folderPath);
-      
-      if (fileSize > 0 && availableSpace > 0 && fileSize > availableSpace) {
-        throw AppException.validation('Not enough storage space available');
+  // Extract media files from videos
+  List<MediaFileModel> _extractVideoMediaFiles(List<Video> videos) {
+    final List<MediaFileModel> mediaFiles = [];
+    
+    for (final video in videos) {
+      if (video.videoUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: video.id * 100, // Unique ID for video
+          userId: video.userId,
+          title: video.title,
+          type: 'video',
+          url: video.videoUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: video.createdAt,
+          updatedAt: video.updatedAt,
+        ));
       }
-    } catch (e) {
-      // If we can't check space, proceed with download
-      print('Warning: Could not check available space: $e');
     }
+    
+    return mediaFiles;
   }
 
-  int _getMaxSizeInBytes(String folderType) {
-    switch (folderType) {
+  // Extract media files from services
+  List<MediaFileModel> _extractServiceMediaFiles(List<Service> services) {
+    final List<MediaFileModel> mediaFiles = [];
+    
+    for (final service in services) {
+      // Add service video
+      if (service.videoUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: service.id * 1000, // Unique ID for service video
+          userId: service.userId,
+          title: '${service.title}_video',
+          type: 'video',
+          url: service.videoUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: service.createdAt,
+          updatedAt: service.updatedAt,
+        ));
+      }
+
+      // Add proposal sample file
+      if (service.fileUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: service.id * 1000 + 1, // Unique ID for proposal
+          userId: service.userId,
+          title: '${service.title}_proposal',
+          type: 'document',
+          url: service.fileUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: service.createdAt,
+          updatedAt: service.updatedAt,
+        ));
+      }
+
+      // Add extra document
+      if (service.extraFileUrl.isNotEmpty) {
+        mediaFiles.add(MediaFileModel(
+          id: service.id * 1000 + 2, // Unique ID for extra doc
+          userId: service.userId,
+          title: '${service.title}_extra',
+          type: 'document',
+          url: service.extraFileUrl,
+          localPath: null,
+          isDownloaded: false,
+          createdAt: service.createdAt,
+          updatedAt: service.updatedAt,
+        ));
+      }
+    }
+    
+    return mediaFiles;
+  }
+
+  // Generate appropriate filename
+  String _generateFileName(MediaFileModel mediaFile) {
+    final extension = _getFileExtension(mediaFile.url, mediaFile.type);
+    final safeName = AppUtils.sanitizeFileName(mediaFile.title);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return '${safeName}_${mediaFile.id}_$timestamp$extension';
+  }
+
+  // Get file extension based on URL or type
+  String _getFileExtension(String url, String type) {
+    // Try to extract extension from URL
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      final pathExtension = path.extension(uri.path);
+      if (pathExtension.isNotEmpty) {
+        return pathExtension;
+      }
+    }
+
+    // Fallback to type-based extension
+    switch (type) {
       case 'image':
-        return AppConstants.maxImageSize;
+        return '.jpg';
       case 'video':
-        return AppConstants.maxVideoSize;
+        return '.mp4';
       case 'document':
-        return AppConstants.maxDocumentSize;
+        return '.pdf';
       default:
-        return AppConstants.maxDocumentSize;
+        return '.bin';
     }
   }
 
-  int _getMaxSizeForType(String folderType) {
-    return (_getMaxSizeInBytes(folderType) / (1024 * 1024)).round();
-  }
-
-  String _getFolderName(String folderType) {
-    switch (folderType) {
+  // Get appropriate folder path based on media type
+  Future<String> _getFolderPath(String type) async {
+    switch (type) {
       case 'image':
-        return AppConstants.imagesFolder;
+        return await FileManager.getFolderPath(AppConstants.imagesFolder);
       case 'video':
-        return AppConstants.videosFolder;
+        return await FileManager.getFolderPath(AppConstants.videosFolder);
       case 'document':
-        return AppConstants.documentsFolder;
+        return await FileManager.getFolderPath(AppConstants.documentsFolder);
       default:
-        return AppConstants.documentsFolder;
+        return await FileManager.getFolderPath(AppConstants.documentsFolder);
     }
   }
 
-  bool get hasActiveDownloads => _activeTasks.isNotEmpty;
-  
-  List<String> get activeTaskIds => _activeTasks.keys.toList();
+  // Get local file path for a media item
+  Future<String?> getLocalFilePath(int mediaId) async {
+    final mediaFile = await mediaLocalDataSource.getMediaFileById(mediaId);
+    if (mediaFile != null && mediaFile.isDownloaded && mediaFile.localPath != null) {
+      final file = File(mediaFile.localPath!);
+      if (await file.exists()) {
+        return mediaFile.localPath;
+      }
+    }
+    return null;
+  }
+
+  // Check if file is available locally
+  Future<bool> isFileDownloaded(int mediaId) async {
+    return await mediaLocalDataSource.isFileDownloaded(mediaId);
+  }
+
+  // Get downloaded files by type
+  Future<List<MediaFileModel>> getDownloadedFilesByType(String type) async {
+    final tables = await mediaLocalDataSource.getDownloadedFilesByType(type);
+    return tables.map((table) => _mapTableToModel(table)).toList();
+  }
+
+  // Delete local file and update database
+  Future<void> deleteLocalFile(int mediaId) async {
+    final mediaFile = await mediaLocalDataSource.getMediaFileById(mediaId);
+    if (mediaFile != null && mediaFile.localPath != null) {
+      final file = File(mediaFile.localPath!);
+      if (await file.exists()) {
+        await file.delete();
+      }
+      await mediaLocalDataSource.deleteMediaFile(mediaId);
+    }
+  }
+
+  // Clear all downloaded files
+  Future<void> clearAllDownloads() async {
+    // Delete physical files
+    await FileManager.clearFolder(AppConstants.imagesFolder);
+    await FileManager.clearFolder(AppConstants.videosFolder);
+    await FileManager.clearFolder(AppConstants.documentsFolder);
+    
+    // Clear database records
+    await mediaLocalDataSource.clearAllMediaFiles();
+  }
+
+  // Get download statistics
+  Future<DownloadStats> getDownloadStats() async {
+    final totalCount = await mediaLocalDataSource.getTotalDownloadCount();
+    final downloadedCount = await mediaLocalDataSource.getDownloadedCount();
+    
+    return DownloadStats(
+      totalFiles: totalCount + downloadedCount,
+      downloadedFiles: downloadedCount,
+      pendingFiles: totalCount,
+    );
+  }
+
+  // Map database table to model
+  MediaFileModel _mapTableToModel(dynamic table) {
+    return MediaFileModel(
+      id: table.id,
+      userId: table.userId,
+      title: table.title,
+      type: table.type,
+      url: table.url,
+      localPath: table.localPath,
+      isDownloaded: table.isDownloaded,
+      createdAt: table.createdAt,
+      updatedAt: table.updatedAt,
+    );
+  }
 }
 
-class DownloadItem {
-  final String url;
-  final String fileName;
-  final String folderType;
+class DownloadResult {
+  final int totalFiles;
+  final int downloadedFiles;
+  final int failedFiles;
+  final List<String> downloadedPaths;
+  final List<String> failedDownloads;
 
-  DownloadItem({
-    required this.url,
-    required this.fileName,
-    required this.folderType,
+  DownloadResult({
+    required this.totalFiles,
+    required this.downloadedFiles,
+    required this.failedFiles,
+    required this.downloadedPaths,
+    required this.failedDownloads,
   });
+
+  bool get hasFailures => failedFiles > 0;
+  bool get isCompleteSuccess => failedFiles == 0 && downloadedFiles == totalFiles;
+  double get successRate => totalFiles > 0 ? (downloadedFiles / totalFiles) * 100 : 0;
 }
 
-class DownloadProgress {
-  final int currentItem;
-  final int totalItems;
-  final String currentFileName;
-  final int currentReceived;
-  final int currentTotal;
-  final int batchReceived;
-  final int batchTotal;
+class DownloadStats {
+  final int totalFiles;
+  final int downloadedFiles;
+  final int pendingFiles;
 
-  DownloadProgress({
-    required this.currentItem,
-    required this.totalItems,
-    required this.currentFileName,
-    required this.currentReceived,
-    required this.currentTotal,
-    required this.batchReceived,
-    required this.batchTotal,
+  DownloadStats({
+    required this.totalFiles,
+    required this.downloadedFiles,
+    required this.pendingFiles,
   });
 
-  double get currentProgress => currentTotal > 0 ? currentReceived / currentTotal : 0;
-  double get batchProgress => batchTotal > 0 ? batchReceived / batchTotal : 0;
-}
-
-class DownloadBatch {
-  final String id;
-  final List<DownloadItem> items;
-  final List<String?> _downloadedPaths;
-  final List<String?> _errors;
-  final List<String> _statuses;
-  final List<int> _received;
-  final List<int> _totals;
-  bool _isCompleted = false;
-  String? _batchError;
-
-  DownloadBatch({required this.id, required this.items})
-      : _downloadedPaths = List.filled(items.length, null),
-        _errors = List.filled(items.length, null),
-        _statuses = List.filled(items.length, 'Pending'),
-        _received = List.filled(items.length, 0),
-        _totals = List.filled(items.length, 0);
-
-  void updateProgress(int index, int received, int total) {
-    if (index >= 0 && index < items.length) {
-      _received[index] = received;
-      _totals[index] = total;
-    }
-  }
-
-  void updateItemStatus(int index, String status) {
-    if (index >= 0 && index < items.length) {
-      _statuses[index] = status;
-    }
-  }
-
-  void completeItem(int index, String filePath) {
-    if (index >= 0 && index < items.length) {
-      _downloadedPaths[index] = filePath;
-      _statuses[index] = 'Completed';
-    }
-  }
-
-  void failItem(int index, String error) {
-    if (index >= 0 && index < items.length) {
-      _errors[index] = error;
-      _statuses[index] = 'Failed';
-    }
-  }
-
-  void complete() {
-    _isCompleted = true;
-  }
-
-  void fail(String error) {
-    _isCompleted = true;
-    _batchError = error;
-  }
-
-  // Getters
-  List<String> get downloadedPaths => _downloadedPaths.where((p) => p != null).cast<String>().toList();
-  List<String> get errors => _errors.where((e) => e != null).cast<String>().toList();
-  List<String> get statuses => List.from(_statuses);
-  bool get isCompleted => _isCompleted;
-  String? get batchError => _batchError;
-  bool get hasErrors => _errors.any((e) => e != null) || _batchError != null;
-  
-  int get completedCount => _downloadedPaths.where((p) => p != null).length;
-  int get failedCount => _errors.where((e) => e != null).length;
-  int get totalReceived => _received.fold(0, (sum, r) => sum + r);
-  int get totalSize => _totals.fold(0, (sum, t) => sum + t);
-  
-  double get overallProgress {
-    if (totalSize == 0) return 0;
-    return totalReceived / totalSize;
-  }
+  double get downloadProgress => totalFiles > 0 ? (downloadedFiles / totalFiles) * 100 : 0;
+  bool get isComplete => pendingFiles == 0;
 }

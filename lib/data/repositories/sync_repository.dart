@@ -1,7 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:municipality_app/core/constants/storage_keys.dart';
-import 'package:municipality_app/data/datasources/local/auth_local_datasource.dart';
-import '../../core/storage/local_storage.dart';
 import '../models/sync_model.dart';
 import '../../core/exceptions/app_exceptions.dart';
 import 'service_repository.dart';
@@ -69,7 +66,8 @@ class SyncRepository {
       scrollingNewsResult.fold(
         (error) {
           lastError = error.message;
-          print('[SyncRepository] Error syncing scrolling news: ${error.message}');
+          print(
+              '[SyncRepository] Error syncing scrolling news: ${error.message}');
         },
         (success) {
           syncedTables.add('scrolling_news');
@@ -84,7 +82,8 @@ class SyncRepository {
         error: lastError,
       );
 
-      print('[SyncRepository] Sync completed. Synced tables: ${syncedTables.join(', ')}');
+      print(
+          '[SyncRepository] Sync completed. Synced tables: ${syncedTables.join(', ')}');
       if (lastError != null) {
         print('[SyncRepository] Sync completed with errors: $lastError');
       }
@@ -96,30 +95,4 @@ class SyncRepository {
       return Left(AppException.unknown(e.toString()));
     }
   }
-
-Future<Either<AppException, bool>> needsSync() async {
-  try {
-    final lastSyncTimeStr = await LocalStorage().getString(StorageKeys.lastSyncTime);
-    
-    // If no sync has been done yet, we need to sync
-    if (lastSyncTimeStr == null || lastSyncTimeStr.isEmpty) {
-      return const Right(true);
-    }
-
-    final lastSyncTime = DateTime.tryParse(lastSyncTimeStr);
-    
-    // If we can't parse the last sync time, we should sync to be safe
-    if (lastSyncTime == null) {
-      return const Right(true);
-    }
-
-    // Check if last sync was more than 1 hour ago
-    final now = DateTime.now();
-    final oneHourAgo = now.subtract(const Duration(hours: 1));
-    
-    return Right(lastSyncTime.isBefore(oneHourAgo));
-  } catch (e) {
-    return Left(AppException.unknown(e.toString()));
-  }
-}
 }

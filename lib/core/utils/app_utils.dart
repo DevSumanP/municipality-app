@@ -64,6 +64,13 @@ class AppUtils {
     return '${nameWithoutExtension}_$timestamp.$extension';
   }
 
+  static String sanitizeFileName(String fileName) {
+    // Replace invalid characters with underscores
+    final sanitized = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    // Ensure it doesn't start or end with an invalid character
+    return sanitized.replaceAll(RegExp(r'^_|_$'), '');
+  }
+
   // Clean HTML content
   static String cleanHtml(String html) {
     final exp = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: true);

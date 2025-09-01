@@ -40,7 +40,7 @@ class MediaRepository {
 
   Future<Either<AppException, void>> saveMediaFile(MediaFileModel mediaFile) async {
     try {
-      await localDataSource.saveMediaFile(_mapModelToTable(mediaFile));
+      await localDataSource.saveMediaFile(mediaFile);
       return const Right(null);
     } catch (e) {
       return Left(AppException.unknown(e.toString()));
@@ -49,7 +49,7 @@ class MediaRepository {
 
   Future<Either<AppException, void>> updateMediaFile(MediaFileModel mediaFile) async {
     try {
-      await localDataSource.updateMediaFile(_mapModelToTable(mediaFile));
+      await localDataSource.updateMediaFile(mediaFile);
       return const Right(null);
     } catch (e) {
       return Left(AppException.unknown(e.toString()));

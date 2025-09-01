@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:municipality_app/core/constants/sizes.dart';
 import 'package:municipality_app/presentation/providers/sync_provider.dart';
-import 'package:municipality_app/presentation/screens/home/home_screen.dart';
 import 'package:municipality_app/presentation/providers/auth_provider.dart';
+import 'package:municipality_app/presentation/screens/main_screen.dart';
 import '../../../core/constants/app_images.dart';
 import 'widgets/onboarding_page.dart';
 
@@ -37,7 +37,7 @@ class _OnBoardingScreenState extends ConsumerState<OnBoardingScreen> {
     if (mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     }
   }

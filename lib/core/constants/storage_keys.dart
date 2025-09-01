@@ -17,6 +17,12 @@ class StorageKeys {
   static const String lastSyncTime = 'last_sync_time';
   static const String syncPreferences = 'sync_preferences';
   static const String offlineMode = 'offline_mode';
+  static const String isSyncing = 'is_syncing';
+  static const String downloadedFilesCount = 'downloaded_files_count';
+  static const String totalFilesCount = 'total_files_count';
+  static const String failedFilesCount = 'failed_files_count';
+  static const String lastDownloadTime = 'last_download_time';
+  
   
   // Cache keys
   static const String servicesCache = 'services_cache';

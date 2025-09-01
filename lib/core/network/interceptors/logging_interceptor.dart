@@ -1,16 +1,38 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:logger/logger.dart';
 
 class LoggingInterceptor extends Interceptor {
+
+  final Logger logger = Logger(
+    printer: PrettyPrinter(
+      methodCount: 0,
+      errorMethodCount: 0,
+      lineLength: 80,
+      colors: true,
+      printEmojis: true,
+      dateTimeFormat: DateTimeFormat.dateAndTime,
+    ),
+  );
+
+  String _truncateHeaderValues(Map<String, dynamic> headers) {
+    return headers.map((key, value) {
+      if (value is String && value.length > 10) {
+        return MapEntry(key, '${value.substring(0, 10)}...');
+      }
+      return MapEntry(key, value);
+    }).toString();
+  }
+
   @override
   void onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     if (kDebugMode) {
-      print('REQUEST[$options.method}] => PATH: ${options.path}');
-      print('Query Parameters: ${options.queryParameters}');
-      print('Headers: ${options.headers}');
+      logger.i('REQUEST[$options.method}] => PATH: ${options.path}');
+      logger.i('Query Parameters: ${options.queryParameters}');
+      logger.i('Headers: ${_truncateHeaderValues(options.headers)}');
       if (options.data != null) {
-        print('Data: ${options.data}');
+        logger.i('Data: ${options.data}');
       }
     }
     handler.next(options);
@@ -19,9 +41,9 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (kDebugMode) {
-      print(
+     logger.d(
           'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
-      print('Data: ${response.data}');
+      logger.d('Data: ${response.data}');
     }
     handler.next(response);
   }
@@ -29,11 +51,11 @@ class LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (kDebugMode) {
-      print(
+      logger.e(
           'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
-      print('Error: ${err.message}');
+      logger.e('Error: ${err.message}');
       if (err.response?.data != null) {
-        print('Error Data: ${err.response?.data}');
+        logger.e('Error Data: ${err.response?.data}');
       }
     }
     handler.next(err);

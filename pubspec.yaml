@@ -56,6 +56,9 @@ dependencies:
   carousel_slider: ^5.1.1
   flutter_shimmer: ^2.1.2
   shimmer: ^3.0.0
+  logger: ^2.6.0
+  html: ^0.15.6
+  flutter_html: ^3.0.0
 
 dev_dependencies:
   flutter_test:
