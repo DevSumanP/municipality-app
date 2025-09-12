@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:municipality_app/core/database/app_database.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/datasources/remote/auth_remote_datasource.dart';
 import '../../data/datasources/local/auth_local_datasource.dart';
@@ -6,15 +7,18 @@ import '../../data/models/user_model.dart';
 import '../../core/network/dio_client.dart';
 import '../../core/storage/local_storage.dart';
 import '../../core/exceptions/app_exceptions.dart';
+import 'database_provider.dart';
 
 // Auth repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final dioClient = ref.read(dioClientProvider);
   final localStorage = LocalStorage();
+  final database = ref.read(appDatabaseProvider); 
 
   return AuthRepository(
     remoteDataSource: AuthRemoteDataSource(dioClient: dioClient),
     localDataSource: AuthLocalDataSource(localStorage: localStorage),
+    database: database,
   );
 });
 
@@ -175,20 +179,36 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
 
     try {
+      // Call logout API
       final result = await _authRepository.logout();
 
       result.fold(
-        (error) {
-          // Even if logout fails on server, clear local data
-          state = const AuthState();
+        (error) async {
+          // Even if API call fails, we still clear local data and reset state
+          state = const AuthState(
+            isLoading: false,
+            isLoggedIn: false,
+            user: null,
+            accessToken: null,
+          );
         },
-        (success) {
-          state = const AuthState();
+        (success) async {
+          state = const AuthState(
+            isLoading: false,
+            isLoggedIn: false,
+            user: null,
+            accessToken: null,
+          );
         },
       );
     } catch (e) {
-      // Clear state even on error
-      state = const AuthState();
+      // Reset state even on error
+      state = const AuthState(
+        isLoading: false,
+        isLoggedIn: false,
+        user: null,
+        accessToken: null,
+      );
     }
   }
 

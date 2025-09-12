@@ -8,6 +8,8 @@ import 'package:municipality_app/presentation/screens/notice/scrolling_news_list
 import 'package:municipality_app/presentation/screens/services/services_list_screen.dart';
 import 'package:municipality_app/presentation/widgets/common/bottom_nav_bar.dart';
 
+import '../providers/auth_provider.dart';
+
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
@@ -20,10 +22,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   final List<Widget> _pages = const [
     HomeScreen(),
-    NoticeListScreen(),
-    ScrollingNewsListScreen(),
-    EmployeesListScreen(),
-    ServicesListScreen(),
+    ServiceScreen(),
+    NewsScreen(),
+    DirectoryScreen(),
+    ContactScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -35,8 +37,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: CustomBottomNavBar(selectedIndex: _selectedIndex, onItemTapped:_onItemTapped)
-    );
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: CustomBottomNavBar(
+            selectedIndex: _selectedIndex, onItemTapped: _onItemTapped));
   }
 }

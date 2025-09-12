@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 
-class ExitDialog extends StatelessWidget {
+class CustomDialog extends StatelessWidget {
   final VoidCallback? onCancel;
-  final VoidCallback? onExit;
+  final VoidCallback? onAction;
 
-  const ExitDialog({
+  final String title;
+  final String description;
+  final String action;
+  final String cancelText;
+
+  const CustomDialog({
     super.key,
     this.onCancel,
-    this.onExit,
+    this.onAction,
+    required this.title,
+    required this.description,
+    required this.action,
+    required this.cancelText,
   });
 
   @override
@@ -24,12 +33,12 @@ class ExitDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Exit App',
+              title,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 10),
             Text(
-              'Are you sure you want to exit the app?',
+             description,
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
@@ -54,7 +63,7 @@ class ExitDialog extends StatelessWidget {
                   ),
                   onPressed: onCancel!,
                   child: Text(
-                    'Cancel',
+                    cancelText,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.black, fontWeight: FontWeight.w500),
                   ),
@@ -71,9 +80,9 @@ class ExitDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
-                  onPressed: onExit!,
+                  onPressed: onAction!,
                   child: Text(
-                    'Exit',
+                    action,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white, fontWeight: FontWeight.w500),
                   ),

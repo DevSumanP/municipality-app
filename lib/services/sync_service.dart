@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
 import 'package:municipality_app/core/constants/storage_keys.dart';
 import 'package:municipality_app/core/exceptions/app_exceptions.dart';
 import 'package:municipality_app/core/network/network_info.dart';
@@ -22,18 +23,18 @@ class SyncService {
     required Function(String) onProgress,
     required Function(AppException) onError,
   }) async {
-    print('[SyncService] Starting syncAllData');
+    Logger().i('[SyncService] Starting syncAllData');
     
     SyncModel? finalSyncModel;
     
     try {
       // Check network connectivity first
-      print('[SyncService] Checking network connectivity...');
+      Logger().i('[SyncService] Checking network connectivity...');
       onProgress('Checking connection...');
       
       if (!await NetworkInfo.isConnected) {
         final error = AppException.noInternet('No internet connection. Please check your network and try again.');
-        print('[SyncService] No internet connection');
+        Logger().i('[SyncService] No internet connection');
         onError(error);
         return SyncModel(
           lastSyncTime: DateTime.now().toIso8601String(),
@@ -44,13 +45,13 @@ class SyncService {
       }
 
       onProgress('Preparing data sync...');
-      print('[SyncService] Marking sync as started');
+      Logger().i('[SyncService] Marking sync as started');
       
       // Mark sync as started
       await _setSyncStatus(true);
 
       onProgress('Syncing services...');
-      print('[SyncService] Starting repository sync...');
+      Logger().i('[SyncService] Starting repository sync...');
 
       // Perform sync with detailed progress tracking
       final result = await syncRepository.syncAllData();
@@ -63,10 +64,10 @@ class SyncService {
       onProgress('Syncing news...');
       await Future.delayed(const Duration(milliseconds: 300));
       
-      print('[SyncService] Repository sync completed, processing result...');
+      Logger().i('[SyncService] Repository sync completed, processing result...');
 
       finalSyncModel = await result.fold((error) async {
-        print('[SyncService] Error during sync: ${error.message}');
+        Logger().i('[SyncService] Error during sync: ${error.message}');
         
         final syncModel = SyncModel(
           lastSyncTime: DateTime.now().toIso8601String(),
@@ -78,14 +79,14 @@ class SyncService {
         onError(error);
         return syncModel;
       }, (syncModel) async {
-        print('[SyncService] Sync completed successfully');
-        print('[SyncService] Synced tables: ${syncModel.syncedTables.join(', ')}');
+        Logger().i('[SyncService] Sync completed successfully');
+        Logger().i('[SyncService] Synced tables: ${syncModel.syncedTables.join(', ')}');
         
         onProgress('Finalizing sync...');
         await Future.delayed(const Duration(milliseconds: 200));
 
         // Save sync time and status
-        print('[SyncService] Saving last sync time: ${syncModel.lastSyncTime}');
+        Logger().i('[SyncService] Saving last sync time: ${syncModel.lastSyncTime}');
         await _localStorage.setString(
           StorageKeys.lastSyncTime,
           syncModel.lastSyncTime,
@@ -109,8 +110,8 @@ class SyncService {
       });
 
     } catch (e, stackTrace) {
-      print('[SyncService] Unexpected error during sync: $e');
-      print('Stack trace: $stackTrace');
+      Logger().i('[SyncService] Unexpected error during sync: $e');
+      Logger().i('Stack trace: $stackTrace');
       
       final error = AppException.unknown('An unexpected error occurred during sync: ${e.toString()}');
       onError(error);
@@ -123,7 +124,7 @@ class SyncService {
       );
     } finally {
       // Always mark sync as completed
-      print('[SyncService] Marking sync as completed');
+      Logger().i('[SyncService] Marking sync as completed');
       await _setSyncStatus(false);
     }
 
@@ -138,7 +139,7 @@ class SyncService {
 
       // If no previous sync or no tables were synced, sync is needed
       if (lastSyncTime == null || syncedTables.isEmpty) {
-        print('[SyncService] No previous sync found - sync needed');
+        Logger().i('[SyncService] No previous sync found - sync needed');
         return true;
       }
 
@@ -150,15 +151,15 @@ class SyncService {
 
         // Sync if more than 24 hours have passed
         final needsSync = difference.inHours >= 24;
-        print('[SyncService] Last sync: $lastSync, Hours since: ${difference.inHours}, Needs sync: $needsSync');
+        Logger().i('[SyncService] Last sync: $lastSync, Hours since: ${difference.inHours}, Needs sync: $needsSync');
         
         return needsSync;
       } catch (e) {
-        print('[SyncService] Error parsing last sync time: $e');
+        Logger().i('[SyncService] Error parsing last sync time: $e');
         return true; // If can't parse date, assume sync is needed
       }
     } catch (e) {
-      print('[SyncService] Error checking sync status: $e');
+      Logger().i('[SyncService] Error checking sync status: $e');
       return true; // On error, assume sync is needed
     }
   }
@@ -167,7 +168,7 @@ class SyncService {
     try {
       return await _localStorage.getString(StorageKeys.lastSyncTime);
     } catch (e) {
-      print('[SyncService] Error getting last sync time: $e');
+      Logger().i('[SyncService] Error getting last sync time: $e');
       return null;
     }
   }
@@ -176,7 +177,7 @@ class SyncService {
     try {
       return await _localStorage.getBool('is_syncing') ?? false;
     } catch (e) {
-      print('[SyncService] Error checking sync status: $e');
+      Logger().i('[SyncService] Error checking sync status: $e');
       return false;
     }
   }
@@ -185,7 +186,7 @@ class SyncService {
     try {
       return await _localStorage.getStringList('synced_tables') ?? [];
     } catch (e) {
-      print('[SyncService] Error getting synced tables: $e');
+      Logger().i('[SyncService] Error getting synced tables: $e');
       return [];
     }
   }
@@ -194,7 +195,7 @@ class SyncService {
     try {
       return await _localStorage.getString('last_sync_error');
     } catch (e) {
-      print('[SyncService] Error getting last sync error: $e');
+      Logger().i('[SyncService] Error getting last sync error: $e');
       return null;
     }
   }
@@ -203,7 +204,7 @@ class SyncService {
     try {
       await _localStorage.setBool('is_syncing', status);
     } catch (e) {
-      print('[SyncService] Error setting sync status: $e');
+      Logger().i('[SyncService] Error setting sync status: $e');
     }
   }
 
@@ -215,7 +216,7 @@ class SyncService {
         await _localStorage.remove('last_sync_error');
       }
     } catch (e) {
-      print('[SyncService] Error saving sync error: $e');
+      Logger().i('[SyncService] Error saving sync error: $e');
     }
   }
 
@@ -225,18 +226,18 @@ class SyncService {
       await _localStorage.remove('is_syncing');
       await _localStorage.remove('synced_tables');
       await _localStorage.remove('last_sync_error');
-      print('[SyncService] Sync data cleared');
+      Logger().i('[SyncService] Sync data cleared');
     } catch (e) {
-      print('[SyncService] Error clearing sync data: $e');
+      Logger().i('[SyncService] Error clearing sync data: $e');
     }
   }
 
   Future<void> forceClearSyncStatus() async {
     try {
       await _localStorage.setBool('is_syncing', false);
-      print('[SyncService] Sync status force cleared');
+      Logger().i('[SyncService] Sync status force cleared');
     } catch (e) {
-      print('[SyncService] Error force clearing sync status: $e');
+      Logger().i('[SyncService] Error force clearing sync status: $e');
     }
   }
 

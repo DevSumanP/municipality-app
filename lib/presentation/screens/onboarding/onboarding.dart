@@ -6,6 +6,7 @@ import 'package:municipality_app/presentation/providers/auth_provider.dart';
 import 'package:municipality_app/presentation/screens/main_screen.dart';
 import '../../../core/constants/app_images.dart';
 import 'widgets/onboarding_page.dart';
+import 'package:municipality_app/presentation/widgets/common/custom_dialog.dart';
 
 class OnBoardingScreen extends ConsumerStatefulWidget {
   const OnBoardingScreen({super.key});
@@ -50,25 +51,17 @@ class _OnBoardingScreenState extends ConsumerState<OnBoardingScreen> {
     // Allow user to skip sync and go to home with limited functionality
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Skip Sync?'),
-        content: const Text(
-          'Skipping sync means some features may not work properly. '
-          'You can sync later from the settings menu.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _navigateToHome();
-            },
-            child: const Text('Skip'),
-          ),
-        ],
+      builder: (context) => CustomDialog(
+        title: 'Skip Sync?',
+        description: 'Skipping sync means some features may not work properly. '
+            'You can sync later from the settings menu.',
+        action: 'Skip',
+        cancelText: 'Cancel',
+        onCancel: () => Navigator.pop(context),
+        onAction: () {
+          Navigator.pop(context);
+          _navigateToHome();
+        },
       ),
     );
   }

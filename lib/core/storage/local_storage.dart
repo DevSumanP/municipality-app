@@ -8,61 +8,101 @@ class LocalStorage {
     _box ??= await Hive.openBox(boxName);
   }
 
-  Future<void> setString(String key, String value) async{
-    final box = _box ?? await Hive.openBox('localStorage');
-    return await box.put(key, value);
+  /// Helper method to ensure box is available
+  Future<Box> get box async {
+    if (_box == null) {
+      _box = await Hive.openBox('localStorage');
+    }
+    return _box!;
   }
 
-  Future<String?> getString(String key) async{
-    final box = _box ?? await Hive.openBox('localStorage');
-    return box.get(key);
+  Future<void> setString(String key, String value) async {
+    final boxInstance = await box;
+    return await boxInstance.put(key, value);
   }
-  
+
+  Future<String?> getString(String key) async {
+    final boxInstance = await box;
+    return boxInstance.get(key);
+  }
+
   Future<void> setBool(String key, bool value) async {
-    await _box?.put(key, value);
+    final boxInstance = await box;
+    await boxInstance.put(key, value);
   }
 
-  bool? getBool(String key) {
-    return _box?.get(key);
+  Future<bool?> getBool(String key) async {
+    final boxInstance = await box;
+    return boxInstance.get(key);
   }
 
   Future<void> setInt(String key, int value) async {
-    await _box?.put(key, value);
+    final boxInstance = await box;
+    await boxInstance.put(key, value);
   }
 
-  int? getInt(String key) {
-    return _box?.get(key);
+  Future<int?> getInt(String key) async {
+    final boxInstance = await box;
+    return boxInstance.get(key);
   }
 
   Future<void> setDouble(String key, double value) async {
-    await _box?.put(key, value);
+    final boxInstance = await box;
+    await boxInstance.put(key, value);
   }
 
-  double? getDouble(String key) {
-    return _box?.get(key);
+  Future<double?> getDouble(String key) async {
+    final boxInstance = await box;
+    return boxInstance.get(key);
   }
 
   Future<void> setStringList(String key, List<String> value) async {
-    await _box?.put(key, value);
+    final boxInstance = await box;
+    await boxInstance.put(key, value);
   }
 
-  List<String>? getStringList(String key) {
-    return (_box?.get(key) as List?)?.cast<String>();
+  Future<List<String>?> getStringList(String key) async {
+    final boxInstance = await box;
+    return (boxInstance.get(key) as List?)?.cast<String>();
   }
 
   Future<void> remove(String key) async {
-    await _box?.delete(key);
+    try {
+      final boxInstance = await box;
+      await boxInstance.delete(key);
+      print('Removed key "$key" from Hive storage');
+      
+      // Verify removal
+      final checkValue = boxInstance.get(key);
+      if (checkValue == null) {
+        print('Key "$key" successfully removed');
+      } else {
+        print('Key "$key" still exists with value: $checkValue');
+      }
+    } catch (e) {
+      print('Error removing key "$key": $e');
+      rethrow;
+    }
   }
 
   Future<void> clear() async {
-    await _box?.clear();
+    try {
+      final boxInstance = await box;
+      await boxInstance.clear();
+      print('Cleared all Hive storage');
+    } catch (e) {
+      print('Error clearing storage: $e');
+      rethrow;
+    }
   }
 
-  bool containsKey(String key) {
-    return _box?.containsKey(key) ?? false;
+  Future<bool> containsKey(String key) async {
+    final boxInstance = await box;
+    return boxInstance.containsKey(key);
   }
 
-  Set<String> getKeys() {
-    return _box?.keys.cast<String>().toSet() ?? {};
+  Future<Set<String>> getKeys() async {
+    final boxInstance = await box;
+    return boxInstance.keys.cast<String>().toSet();
   }
 }

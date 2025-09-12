@@ -1,273 +1,284 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:municipality_app/core/database/app_database.dart';
-import '../../providers/database_provider.dart';
+import 'package:flutter/services.dart';
 
-class ServicesListScreen extends ConsumerWidget {
-  const ServicesListScreen({super.key});
+class ServiceCategory {
+  final String id;
+  final String name;
+  final Color color;
 
-  Map<String, dynamic> getStatusInfo(String status) {
-    switch (status) {
-      case 'available':
-        return {
-          "color": Colors.green[700],
-          "bg": Colors.green[50],
-          "text": "Available"
-        };
-      case 'maintenance':
-        return {
-          "color": Colors.amber[700],
-          "bg": Colors.amber[50],
-          "text": "Maintenance"
-        };
-      case 'limited':
-        return {
-          "color": Colors.red[700],
-          "bg": Colors.red[50],
-          "text": "Limited Access"
-        };
-      default:
-        return {
-          "color": Colors.green[700],
-          "bg": Colors.green[50],
-          "text": "Active"
-        };
-    }
-  }
+  ServiceCategory({
+    required this.id,
+    required this.name,
+    required this.color,
+  });
+}
 
-  Color getCategoryColor(String category) {
-    switch (category) {
-      case 'IT Support':
-        return Colors.blue;
-      case 'Infrastructure':
-        return Colors.purple;
-      case 'Security':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
+class Service {
+  final int id;
+  final String title;
+  final String category;
+  final String description;
+  final String status;
+  final String processingTime;
+  final String fee;
+  final bool hasVideo;
+  final IconData icon;
+  final Color color;
+
+  Service({
+    required this.id,
+    required this.title,
+    required this.category,
+    required this.description,
+    required this.status,
+    required this.processingTime,
+    required this.fee,
+    required this.hasVideo,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class ServiceScreen extends StatefulWidget {
+  const ServiceScreen({super.key});
+
+  @override
+  State<ServiceScreen> createState() => _ServiceScreenState();
+}
+
+class _ServiceScreenState extends State<ServiceScreen> {
+  String searchQuery = '';
+  String selectedCategory = 'all';
+  bool showFilters = false;
+
+  final List<ServiceCategory> serviceCategories = [
+    ServiceCategory(id: 'all', name: 'All Services', color: const Color(0xFF1E40AF)),
+    ServiceCategory(id: 'permits', name: 'Permits', color: const Color(0xFF059669)),
+    ServiceCategory(id: 'utilities', name: 'Utilities', color: const Color(0xFFDC2626)),
+    ServiceCategory(id: 'transportation', name: 'Transportation', color: const Color(0xFF7C3AED)),
+    ServiceCategory(id: 'public-safety', name: 'Public Safety', color: const Color(0xFFEA580C)),
+  ];
+
+  final List<Service> services = [
+    Service(
+      id: 1,
+      title: 'Building Permits',
+      category: 'permits',
+      description: 'Apply for residential and commercial building permits online',
+      status: 'online',
+      processingTime: '5-10 business days',
+      fee: '\$50-\$500',
+      hasVideo: true,
+      icon: Icons.business,
+      color: const Color(0xFF059669),
+    ),
+    Service(
+      id: 2,
+      title: 'Utility Bill Payment',
+      category: 'utilities',
+      description: 'Pay water, electric, and gas bills securely online',
+      status: 'online',
+      processingTime: 'Instant',
+      fee: 'Free',
+      hasVideo: false,
+      icon: Icons.credit_card,
+      color: const Color(0xFFDC2626),
+    ),
+    Service(
+      id: 3,
+      title: 'Parking Permits',
+      category: 'transportation',
+      description: 'Apply for residential and business parking permits',
+      status: 'online',
+      processingTime: '2-3 business days',
+      fee: '\$25-\$100',
+      hasVideo: true,
+      icon: Icons.directions_car,
+      color: const Color(0xFF7C3AED),
+    ),
+    Service(
+      id: 4,
+      title: 'Water Service Connection',
+      category: 'utilities',
+      description: 'Request new water service connection for your property',
+      status: 'in-person',
+      processingTime: '7-14 business days',
+      fee: '\$150',
+      hasVideo: true,
+      icon: Icons.water_drop,
+      color: const Color(0xFF0891B2),
+    ),
+    Service(
+      id: 5,
+      title: 'Waste Management Services',
+      category: 'utilities',
+      description: 'Schedule bulk pickup and manage waste services',
+      status: 'online',
+      processingTime: '3-5 business days',
+      fee: '\$35',
+      hasVideo: false,
+      icon: Icons.delete,
+      color: const Color(0xFF16A34A),
+    ),
+    Service(
+      id: 6,
+      title: 'Business License',
+      category: 'permits',
+      description: 'Apply for new business license or renew existing one',
+      status: 'online',
+      processingTime: '10-15 business days',
+      fee: '\$75-\$200',
+      hasVideo: true,
+      icon: Icons.description,
+      color: const Color(0xFFCA8A04),
+    ),
+  ];
+
+  List<Service> get filteredServices {
+    return services.where((service) {
+      final matchesSearch = service.title.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          service.description.toLowerCase().contains(searchQuery.toLowerCase());
+      final matchesCategory = selectedCategory == 'all' || service.category == selectedCategory;
+      return matchesSearch && matchesCategory;
+    }).toList();
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final database = ref.watch(appDatabaseProvider);
-
+  Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: Text(
-            'Services',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontSize: 18),
-          ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.0),
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.dark.copyWith(
+          statusBarColor: const Color(0xFFF8FAFC),
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Service Status Overview
-              Card(
-                color: Colors.white,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                elevation: 1,
-                child: const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Service Status",
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827)),
-                      ),
-                      SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _StatusItem(color: Colors.green, text: "4 Available"),
-                          _StatusItem(
-                              color: Colors.amber, text: "1 Maintenance"),
-                          _StatusItem(color: Colors.red, text: "1 Limited"),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Services List
-              FutureBuilder<List<ServicesTable>>(
-                future: database.servicesDao.getAllServices(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No services available'));
-                  }
-
-                  final services = snapshot.data!;
-                  return ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: services.length,
-                    itemBuilder: (context, index) {
-                      final service = services[index];
-                      return Card(
-                        color: Colors.white,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        elevation: 1,
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEFF6FF),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Icon(Iconsax.setting,
-                                        color: Colors.blue, size: 24),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(service.title,
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF111827))),
-                                        const SizedBox(height: 4),
-                                        Text(service.description,
-                                            style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Color(0xFF6B7280),
-                                                height: 1.4),
-                                                maxLines: 4,
-                                                overflow: TextOverflow.ellipsis,),
-                                          
-                                      ],
-                                    ),
-                                  ),
-                                  const Icon(Iconsax.arrow_right_14,
-                                      color: Color(0xFF9CA3AF), size: 20),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          getStatusInfo(service.status)["bg"],
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      getStatusInfo(service.status)["text"],
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: getStatusInfo(
-                                              service.status)["color"]),
-                                    ),
-                                  ),
-                                  if (service.status == "maintenance")
-                                    const Row(
-                                      children: [
-                                        Icon(Iconsax.clock,
-                                            color: Colors.amber, size: 12),
-                                        SizedBox(width: 4),
-                                        Text("Back at 6 PM",
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.amber)),
-                                      ],
-                                    ),
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Emergency Contact
+              // Header
               Container(
-                padding: const EdgeInsets.all(16),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF2F2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFFECACA)),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  
                 ),
-                child: Column(
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Need Immediate Help?",
+                    Text(
+                      'Municipal Services',
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFDC2626)),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                        height: 1.2,
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                          color: const Color(0xFFDC2626),
-                          borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 20),
-                      child: const Column(
-                        children: [
-                          Text("Call IT Emergency Line",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700)),
-                          SizedBox(height: 2),
-                          Text("+1 (555) 911-TECH",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800)),
-                        ],
+                    SizedBox(height: 4),
+                    Text(
+                      'Access city services and information',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF64748B),
+                        height: 1.2,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16,)
+
+              // Search and Filter Section
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                   
+
+                    // Category Filters
+                    SizedBox(
+                      height: 36,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: serviceCategories.length,
+                        itemBuilder: (context, index) {
+                          final category = serviceCategories[index];
+                          final isSelected = selectedCategory == category.id;
+                          
+                          return Container(
+                            margin: EdgeInsets.only(
+                              right: index < serviceCategories.length - 1 ? 12 : 20,
+                            ),
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategory = category.id;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? category.color : const Color(0xFFF3F4F6),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  category.name,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Services List
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      // Services Header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          '${filteredServices.length} service${filteredServices.length != 1 ? 's' : ''} available',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+
+                      // Services List
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredServices.length,
+                          itemBuilder: (context, index) {
+                            return ServiceCard(service: filteredServices[index]);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -276,31 +287,201 @@ class ServicesListScreen extends ConsumerWidget {
   }
 }
 
-class _StatusItem extends StatelessWidget {
-  final Color color;
-  final String text;
+class StatusBadge extends StatelessWidget {
+  final String status;
 
-  const _StatusItem({required this.color, required this.text});
+  const StatusBadge({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          margin: const EdgeInsets.only(right: 6),
-          decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(4)),
+    final Map<String, Map<String, dynamic>> statusConfig = {
+      'online': {
+        'color': const Color(0xFF059669),
+        'bgColor': const Color(0xFFECFDF5),
+        'text': 'Online'
+      },
+      'in-person': {
+        'color': const Color(0xFFEA580C),
+        'bgColor': const Color(0xFFFFF7ED),
+        'text': 'In-Person'
+      },
+      'offline': {
+        'color': const Color(0xFFDC2626),
+        'bgColor': const Color(0xFFFEF2F2),
+        'text': 'Offline'
+      },
+    };
+
+    final config = statusConfig[status]!;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: config['bgColor'],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        config['text'],
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: config['color'],
         ),
-        Text(
-          text,
-          style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-              fontWeight: FontWeight.w600),
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class ServiceCard extends StatelessWidget {
+  final Service service;
+
+  const ServiceCard({super.key, required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            offset: const Offset(0, 2),
+            blurRadius: 3,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Service Header
+          Row(
+            children: [
+              // Service Icon
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: service.color,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Icon(
+                  service.icon,
+                  size: 24,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Service Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            service.title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                        ),
+                        if (service.hasVideo) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDBEAFE),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow,
+                              size: 12,
+                              color: Color(0xFF1E40AF),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    StatusBadge(status: service.status),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Color(0xFF64748B),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Service Description
+          Text(
+            service.description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF64748B),
+              height: 1.43,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Service Details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    size: 14,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    service.processingTime,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.credit_card,
+                    size: 14,
+                    color: Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    service.fee,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

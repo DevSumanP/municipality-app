@@ -4,7 +4,6 @@ import 'package:path/path.dart' as path;
 import '../core/network/dio_client.dart';
 import '../core/storage/file_manager.dart';
 import '../core/constants/app_constants.dart';
-import '../core/exceptions/app_exceptions.dart';
 import '../core/utils/app_utils.dart';
 import '../data/datasources/remote/media_remote_datasource.dart';
 import '../data/datasources/local/media_local_datasource.dart';

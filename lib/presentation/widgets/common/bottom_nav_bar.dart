@@ -50,10 +50,10 @@ class CustomBottomNavBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildNavItem(0, Iconsax.home, 'Home'),
-                _buildNavItem(1, Iconsax.notification, 'Notices'),
+                _buildNavItem(1, Iconsax.setting, 'Services'),
                 _buildNavItem(2, Iconsax.document, 'News'),
-                _buildNavItem(3, Iconsax.profile_2user, 'Employees'),
-                _buildNavItem(4, Iconsax.setting, 'Services'),
+                _buildNavItem(3, Iconsax.profile_2user, 'Directory'),
+                _buildNavItem(4, Iconsax.call, 'Contact'),
               ],
             ),
           ),

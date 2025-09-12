@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:municipality_app/core/database/app_database.dart';
 import 'app.dart';
+import 'core/storage/local_storage.dart';
 
-// Create a global database instance
 late final AppDatabase database;
 
 void main() async {
@@ -14,10 +14,11 @@ void main() async {
   try {
     // Initialize Hive
     await Hive.initFlutter();
-    
-    // Initialize and open the database
+    await LocalStorage.init(); 
+
     database = AppDatabase();
-    
+
+
     debugPrint('Database initialized successfully');
 
     // Run the app

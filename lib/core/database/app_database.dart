@@ -33,7 +33,16 @@ part 'app_database.g.dart';
 )
 
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+    // Singleton instance
+  static AppDatabase? _instance;
+  
+  // Private constructor
+  AppDatabase._() : super(_openConnection());
+
+  // Factory constructor
+  factory AppDatabase() {
+    return _instance ??= AppDatabase._();
+  }
 
   @override
   int get schemaVersion => 1;
@@ -59,10 +68,10 @@ class AppDatabase extends _$AppDatabase {
   // Helper method to clear all data
   Future<void> clearAllData() async {
     await transaction(() async {
-      await documentsDao.deleteAllDocuments();
-      await employeesDao.deleteAllEmployees();
-      await servicesDao.deleteAllServices();
-      await mediaFilesDao.deleteAllMediaFiles();
+      await delete(services).go();
+      await delete(documents).go();
+      await delete(employees).go();
+      await delete(mediaFiles).go();
     });
   }
 
