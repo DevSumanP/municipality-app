@@ -1,0 +1,1 @@
+enum ServiceStatus { online, inPerson, offline }

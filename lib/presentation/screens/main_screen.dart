@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconsax/iconsax.dart';
+import 'package:municipality_app/features/contact/presentation/screens/contact_screen.dart';
+import 'package:municipality_app/features/news/presentation/screens/news_screen.dart';
+import 'package:municipality_app/features/services/presentation/screens/service_screen.dart';
 import 'package:municipality_app/presentation/screens/employees/employees_list_screen.dart';
 import 'package:municipality_app/presentation/screens/home/home_screen.dart';
-import 'package:municipality_app/presentation/screens/notice/notice_list_screen.dart';
-import 'package:municipality_app/presentation/screens/notice/scrolling_news_list_screen.dart';
-import 'package:municipality_app/presentation/screens/services/services_list_screen.dart';
 import 'package:municipality_app/presentation/widgets/common/bottom_nav_bar.dart';
 
-import '../providers/auth_provider.dart';
+
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});

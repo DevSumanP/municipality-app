@@ -1,4 +1,3 @@
-
 enum AppExceptionType {
   network,
   timeout,
@@ -21,7 +20,8 @@ abstract class AppException implements Exception {
   final dynamic data;
   final AppExceptionType type;
 
-  const AppException(this.message, {this.code, this.data, this.type = AppExceptionType.unknown});
+  const AppException(this.message,
+      {this.code, this.data, this.type = AppExceptionType.unknown});
 
   // Network exceptions
   static AppException network(String message) => NetworkException(message);
@@ -52,7 +52,6 @@ abstract class AppException implements Exception {
   String toString() =>
       'AppException: $message${code != null ? ' (Code: $code)' : ''}';
 }
-
 
 // Network Exceptions
 class NetworkException extends AppException {
@@ -108,4 +107,36 @@ class UnknownException extends AppException {
 
 class ParsingException extends AppException {
   const ParsingException(super.message) : super(code: 'PARSING_ERROR');
+}
+
+/// Helper method to handle HTTP status codes consistently
+AppException handleHttpStatusCode(int? statusCode, String resourceName) {
+  switch (statusCode) {
+    case 400:
+      return AppException.validation('Invalid request for $resourceName');
+    case 401:
+      return AppException.unauthorized(
+          'Authentication required to access $resourceName');
+    case 403:
+      return AppException.forbidden('Access to $resourceName is forbidden');
+    case 404:
+      return AppException.notFound('$resourceName not found');
+    case 408:
+      return AppException.timeout('Request timeout for $resourceName');
+    case 422:
+      return AppException.validation('Validation failed for $resourceName');
+    case 429:
+      return AppException.network('Too many requests. Please try again later.');
+    case 500:
+      return AppException.server('Internal server error occurred');
+    case 502:
+      return AppException.server('Bad gateway error');
+    case 503:
+      return AppException.server('Service temporarily unavailable');
+    case 504:
+      return AppException.timeout('Gateway timeout');
+    default:
+      return AppException.server(
+          'Server error occurred${statusCode != null ? ' (Status: $statusCode)' : ''}');
+  }
 }
