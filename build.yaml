@@ -1,0 +1,16 @@
+targets:
+  $default:
+    sources:
+      include:
+        - lib/**
+      exclude:
+        - web/**
+        - linux/**
+        - macos/**
+        - windows/**
+        - ios/**
+        - android/**
+        - test/**
+        - "**/.plugin_symlinks/**"
+        - "**/flutter/**"
+        - "**/ephemeral/**"

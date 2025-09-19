@@ -1,7 +1,7 @@
 class ApiEndpoints {
   // static const String baseUrl = 'https://dcc.progressnepal.com/api';
 
-  static const String baseUrl = 'https://script.google.com/macros/s/AKfycbyFEzrFryH73n2lxyzIbIPNf5pRWXHiuVS1beVN1IDgIPwrb0kk1LZvXvH-8Qhop6Jw-w/exec?path=';
+  static const String baseUrl = 'https://script.google.com/macros/s/AKfycbyrr-S8ThkhVdn7h1HO2A1Zi37veeLXuvI2I16RCt1-jqvnXMry6eGGUy7k-yWejhz_JA/exec?path=';
 
   
   // Auth
@@ -21,9 +21,9 @@ class ApiEndpoints {
   static const String officeLocations = 'api/officelocations';
   static const String quickLinks = 'api/quicklinks';
 
+  static const String departments = 'api/departments';
+  static const String employees = 'api/employees';
 
-  static const String departments = '';
-  static const String employees = '/employees';
   static const String notices = '/notices';
   static const String scrollingNews = '/scrolling-news';
   static const String dashboardVideos = '/dashboard-videos';
